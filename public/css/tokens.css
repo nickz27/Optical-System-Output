@@ -1,0 +1,19 @@
+:root{
+  --bg:#0f141b; --panel:#121924; --panel-2:#0d1420;
+  --text:#e6edf3; --muted:#a3b1c6; --border:#1f2a3a;
+  --green:#1db954; --amber:#f1b402; --red:#ff5d5d; --blue:#4ea4ff;
+  --chip:#0e2135; --card:#0f1b28;
+}
+body{background:var(--bg);color:var(--text)}
+.btn{background:#1b2838;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:6px 10px;margin-right:8px}
+.btn-danger{background:#3b1b1b;border-color:#5b2a2a}
+.primary{background:#1b3a28;border:1px solid #24543d;color:#cfeede;border-radius:10px;padding:8px 12px}
+.sep{display:inline-block;width:12px}
+.section{padding:12px 16px;border-bottom:1px solid var(--border)}
+.group{display:flex;flex-direction:column;gap:6px;margin:10px 0}
+label{font-size:12px;color:var(--muted)}
+input,select,textarea{background:var(--panel);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:8px}
+.range-chip{background:var(--chip);border:1px solid var(--border);border-radius:10px;padding:6px 10px;display:inline-block}
+.range-green{color:#a7f3b6;border-color:#2a7c4f}
+.range-yellow{color:#ffe28a;border-color:#8a6b1f}
+.range-red{color:#ffb3b3;border-color:#7a2a2a}

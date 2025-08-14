@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Optical Chain Builder (Range)</title>
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/nodes.css">
+  <link rel="stylesheet" href="css/modals.css">
+  <link rel="stylesheet" href="css/utilities.css">
+</head>
+<body>
+  <div id="topbar">
+    <div class="left">
+      <button id="btn-add-light-source" class="btn btn-amber">Add Light Source</button>
+      <button id="btn-import-state" class="btn">Import JSON</button>
+      <button id="btn-export-state" class="btn">Export JSON</button>
+      <span class="sep"></span>
+      <button id="btn-import-catalog" class="btn">Import tables</button>
+      <button id="btn-export-catalog" class="btn">Export tables</button>
+    </div>
+    <div class="right">
+      <button id="btn-undo" class="btn">Undo</button>
+      <button id="btn-redo" class="btn">Redo</button>
+      <button id="btn-fit" class="btn">Fit</button>
+      <button id="btn-reset" class="btn btn-danger">Reset</button>
+    </div>
+  </div>
+
+  <div id="app">
+    <div id="board">
+      <div id="viewport">
+        <svg id="edges"></svg>
+        <div id="nodes-layer"></div>
+      </div>
+      <div id="guides"></div>
+      <div id="chain-footer" class="chain-footer" role="status" aria-live="polite"></div>
+    </div>
+
+    <aside id="sidebar">
+      <div class="section">
+        <div class="group">
+          <label>Function</label>
+          <select id="sel-function"></select>
+        </div>
+        <div class="group">
+          <label>Target minimum lumens</label>
+          <input id="inp-target-lm" type="number" min="0" step="1" value="100">
+        </div>
+        <div class="group">
+          <label>Final Output (active chain)</label>
+          <div id="final-range" class="range-chip">0–0 lm</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Add component</h3>
+        <div class="group">
+          <label>Optical System</label>
+          <select id="sel-kind"></select>
+        </div>
+        <div class="group">
+          <label>Label</label>
+          <input id="inp-label" type="text" placeholder="(optional)">
+        </div>
+
+        <div id="add-dynamic"></div>
+
+        <div class="group">
+          <label>Notes</label>
+          <textarea id="inp-notes" rows="2" placeholder="(optional)"></textarea>
+        </div>
+        <button id="btn-add" class="primary">Add</button>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Modals -->
+  <div id="ls-modal" class="modal">
+    <div class="modal-header" id="ls-drag">Light Source</div>
+    <div class="modal-body">
+      <div class="group"><label>Chain label</label><input id="ed-chain-label" type="text" placeholder="e.g., DRL, Turn, Low Beam"></div>
+      <div class="group"><label>LEDs</label><input id="ed-led-count" type="number" min="0" step="1"></div>
+      <div class="group"><label>lm/LED</label><input id="ed-led-lm" type="number" min="0" step="1"></div>
+      <div class="group"><label>Total lm (computed)</label><input id="ed-led-total" type="number" readonly></div>
+    </div>
+    <div class="modal-actions"><button id="btn-ls-ok" class="primary" type="button">OK</button></div>
+  </div>
+
+  <div id="node-modal" class="modal">
+    <div class="modal-header" id="node-drag">Edit Component</div>
+    <div class="modal-body">
+      <div class="group"><label>Chain label</label><input id="ed-chain-label" type="text" placeholder="e.g., DRL, Turn, Low Beam"></div>
+      <div class="group">
+        <label>Optical System</label>
+        <select id="nm-kind"></select>
+      </div>
+      <div id="nm-dynamic"></div>
+      <div class="group"><label>Label</label><input id="nm-label" type="text"></div>
+      <div class="group"><label>Notes</label><textarea id="nm-notes" rows="2"></textarea></div>
+    </div>
+    <div class="modal-actions">
+      <button id="btn-nm-ok" class="primary" type="button">OK</button>
+    </div>
+  </div>
+
+  <script type="module" src="../src/main.js"></script>
+</body>
+</html>

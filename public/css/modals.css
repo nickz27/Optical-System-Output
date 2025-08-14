@@ -1,0 +1,6 @@
+.modal{display:none}
+.modal.show{display:block;position:fixed;z-index:10000;left:50%;top:50%;transform:none;background:var(--panel);border:1px solid var(--border);border-radius:16px;box-shadow:0 12px 32px rgba(0,0,0,.5);width:340px;max-height:70vh;overflow:auto}
+.modal-header{padding:10px 12px;border-bottom:1px solid var(--border);cursor:grab;font-weight:600}
+.modal-body{padding:12px}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;padding:0 12px 12px}
+body.dragging{user-select:none;cursor:grabbing}
