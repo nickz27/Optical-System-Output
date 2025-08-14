@@ -2,9 +2,8 @@
 .node.light{border-color:#1b7c5a;box-shadow:0 0 0 2px rgba(46,160,67,.35) inset}
 .node.summary{background:#101b2b;border-color:#2a3d59}
 .node.system{background:#1a142b;border-color:#45317a}
-.node-header{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-bottom:1px solid var(--border);cursor:move}
+.node-header{display:flex;justify-content:flex-start;align-items:center;gap:.5rem;padding:8px 10px;border-bottom:1px solid var(--border);cursor:move}
 .node-title{font-weight:600}
-.pill{background:#182232;border:1px solid var(--border);border-radius:12px;padding:2px 8px;font-size:12px;color:#c7d0df}
 .node-body{padding:10px;display:grid;grid-template-columns:auto auto;gap:8px 18px}
 .metric{color:#a9b6c9;font-size:12px}
 .value{font-weight:600}

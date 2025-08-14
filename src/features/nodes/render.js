@@ -31,8 +31,13 @@ function nodeHtml(n, tables){
     Object.entries(n.config||{}).forEach(([k,v])=>{ if(k==='notes') return; body += `<div><div class="metric">${k}</div><div>${v}</div></div>`; });
   }
   const extraClass = isLight?' light':(isSummary?' summary':(isSystem?' system':''));
+  // return `<div class="node${extraClass}" id="${n.id}" style="left:${n.x}px;top:${n.y}px">
+    // <div class="node-header" data-drag-handle><div class="node-title">${n.label||n.kind}</div></div>
+  const title = isLight
+    ? ((getState().chains.find(c=>c.id===n.chainId)?.label || '').trim() || 'Light Source')
+    : ((n.label && n.label.trim()) || n.kind);
   return `<div class="node${extraClass}" id="${n.id}" style="left:${n.x}px;top:${n.y}px">
-    <div class="node-header" data-drag-handle><div class="node-title">${n.label||n.kind}</div><div class="pill">${n.kind==='LightSource'?'Source':n.kind}</div></div>
+    <div class="node-header" data-drag-handle><div class="node-title">${title}</div></div>    
     <div class="node-body">${body}</div>
   </div>`;
 }

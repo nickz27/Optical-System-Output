@@ -12,7 +12,8 @@ export function mount(){
   const st=getState();
   if(!st.chains.length){
     const cid = actions.addChain();
-    actions.addNode({ chainId: cid, kind:'LightSource', label:'Light Source', x:120, y:120 });
+    const userLabel = (document.getElementById('inp-label')?.value || '').trim();
+    actions.addNode({ chainId, kind: selectedKind, label: userLabel, x, y });
   }
   bindToolbar();
   bindAddPanel();
