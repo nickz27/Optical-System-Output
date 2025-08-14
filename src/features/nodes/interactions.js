@@ -25,15 +25,39 @@ export function bindNodeInteractions(){
     const additive = e.ctrlKey || e.metaKey || e.shiftKey;
     actions.select(card.id, additive);
   });
+   if(!layer) return;
+    let lastClick = { id:null, t:0, x:0, y:0 };
+    const DBL_MS = 300, MOVE_TOL = 4;
+    layer.addEventListener('click', (e)=>{
+      const card = e.target.closest('.node'); if(!card) return;
+      const now = performance.now();
+      const same =
+        lastClick.id === card.id &&
+        (now - lastClick.t) <= DBL_MS &&
+        Math.abs(e.clientX - lastClick.x) <= MOVE_TOL &&
+        Math.abs(e.clientY - lastClick.y) <= MOVE_TOL;
+      lastClick = { id: card.id, t: now, x: e.clientX, y: e.clientY };
+      if(!same) return;
+      const st = window.App.Store.getState();
+      const n = st.nodes.find(x=>x.id===card.id); if(!n) return;
+      if(n.kind === 'LightSource'){
+        window.App?.Events?.openLsModal && window.App.Events.openLsModal(n.chainId);
+      }else{
+        window.App?.Events?.openNodeModal && window.App.Events.openNodeModal(card.id);
+      }
+    });
+
   layer.addEventListener('dblclick',(e)=>{
     const card = e.target.closest('.node'); if(!card) return;
-    const n = getState().nodes.find(x=>x.id===card.id); if(!n) return;
-    if (n.kind === 'LightSource') {
+    const st = window.App.Store.getState();
+    const n = st.nodes.find(x=>x.id===card.id); if(!n) return;
+    if(n.kind === 'LightSource'){
       window.App?.Events?.openLsModal && window.App.Events.openLsModal(n.chainId);
-    } else {
+    }else{
       window.App?.Events?.openNodeModal && window.App.Events.openNodeModal(card.id);
     }
   });
+
   let drag=null;
   layer.addEventListener('mousedown',(e)=>{
     const handle=e.target.closest('[data-drag-handle]'); if(!handle) return;
