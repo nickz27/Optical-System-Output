@@ -26,11 +26,13 @@ export function bindNodeInteractions(){
     actions.select(card.id, additive);
   });
   layer.addEventListener('dblclick',(e)=>{
-    const card=e.target.closest('.node'); if(!card) return;
-    const n=getState().nodes.find(x=>x.id===card.id);
-    if(!n) return;
-    if(n.kind==='LightSource') window.App.Events.openLsModal(n.chainId);
-    else window.App.Events.openNodeModal(card.id);
+    const card = e.target.closest('.node'); if(!card) return;
+    const n = getState().nodes.find(x=>x.id===card.id); if(!n) return;
+    if (n.kind === 'LightSource') {
+      window.App?.Events?.openLsModal && window.App.Events.openLsModal(n.chainId);
+    } else {
+      window.App?.Events?.openNodeModal && window.App.Events.openNodeModal(card.id);
+    }
   });
   let drag=null;
   layer.addEventListener('mousedown',(e)=>{

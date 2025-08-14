@@ -1,7 +1,7 @@
-import opticalSystems from './defaults/opticalSystems.json' assert { type: 'json' };
-import materials from './defaults/materials.json' assert { type: 'json' };
-import textures from './defaults/textures.json' assert { type: 'json' };
-import lampFunctions from './defaults/lampFunctions.json' assert { type: 'json' };
+import opticalSystems from './defaults/opticalSystems.js';
+import materials from './defaults/materials.js';
+import textures from './defaults/textures.js';
+import lampFunctions from './defaults/lampFunctions.js';
 import { loadTables, saveTables } from '../util/persist.js';
 
 export function buildTables(raw){

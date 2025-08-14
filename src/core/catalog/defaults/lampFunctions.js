@@ -1,0 +1,4 @@
+export default [
+  { id: "DRL",  label: "DRL",  requiredLumens: 100 },
+  { id: "Turn", label: "Turn", requiredLumens: 90 }
+];

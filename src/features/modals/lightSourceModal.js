@@ -44,5 +44,10 @@ export function bindLightSourceModal(){
     recompute(); center(modal);
   }
   function close(){ modal.classList.remove('show'); }
-  window.App = window.App || {}; window.App.Events = Object.assign({}, window.App.Events, { openLsModal: open, closeLsModal: close });
+    window.App = window.App || {};
+    window.App.Events = { ...(window.App.Events||{}), openLsModal: open, closeLsModal: close };
+
 }
+
+window.App = window.App || {};
+window.App.Events = { ...(window.App.Events||{}), openLsModal: open, closeLsModal: close };

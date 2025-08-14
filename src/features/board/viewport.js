@@ -10,7 +10,7 @@ export function bindViewport(){
     vpEl.style.transform = `translate(${st.viewport.x}px, ${st.viewport.y}px) scale(${nk})`;
   }, {passive:false});
   vpEl.addEventListener('mousedown', (e)=>{
-    if(e.buttons!==1 || (!e.altKey and e.button!==1 and !e.shiftKey)) return;
+    if(e.buttons!==1 || (!e.altKey && e.button!==1 && !e.shiftKey)) return;
   });
   // simpler: hold Alt to pan
   vpEl.addEventListener('mousedown', (e)=>{

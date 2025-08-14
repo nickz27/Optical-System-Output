@@ -1,0 +1,5 @@
+export default {
+  MT11020: { label: "MT11020", min: 0.58, max: 0.62 },
+  MT11030: { label: "MT11030", min: 0.48, max: 0.52 },
+  MT11040: { label: "MT11040", min: 0.38, max: 0.42 }
+};
