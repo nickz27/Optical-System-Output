@@ -28,9 +28,11 @@ export function bindNodeInteractions(){
    if(!layer) return;
     let lastClick = { id:null, t:0, x:0, y:0 };
     const DBL_MS = 300, MOVE_TOL = 4;
-    layer.addEventListener('click', (e)=>{
-      const card = e.target.closest('.node'); if(!card) return;
-      const now = performance.now();
+   layer.addEventListener('click', (e)=>{
+     const card = e.target.closest('.node');
+     const act  = window.App?.Store?.actions;
+     if(!act?.selectSingle) return;
+     act.selectSingle(card ? card.id : null)
       const same =
         lastClick.id === card.id &&
         (now - lastClick.t) <= DBL_MS &&
@@ -46,6 +48,17 @@ export function bindNodeInteractions(){
         window.App?.Events?.openNodeModal && window.App.Events.openNodeModal(card.id);
       }
     });
+  function setTreeHover(nodeId, on){
+    window.App?.Sidebar?.highlight && window.App.Sidebar.highlight(nodeId, on);
+  }
+  layer.addEventListener('mouseenter', (e)=>{
+    const card = e.target.closest('.node'); if(!card) return;
+    setTreeHover(card.id, true);
+  }, true);
+  layer.addEventListener('mouseleave', (e)=>{
+    const card = e.target.closest('.node'); if(!card) return;
+    setTreeHover(card.id, false);
+  }, true);
 
   layer.addEventListener('dblclick',(e)=>{
     const card = e.target.closest('.node'); if(!card) return;
@@ -109,3 +122,4 @@ export function bindNodeInteractions(){
   });
   window.addEventListener('mouseup',()=>{ if(drag){ actions.endBatch(); drag=null; clearGuides(); }});
 }
+

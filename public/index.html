@@ -10,11 +10,13 @@
   <link rel="stylesheet" href="css/nodes.css">
   <link rel="stylesheet" href="css/modals.css">
   <link rel="stylesheet" href="css/utilities.css">
+  <link rel="stylesheet" href="css/sidebar-tree.css">
 </head>
 <body>
   <div id="topbar">
     <div class="left">
       <button id="btn-add-light-source" class="btn btn-amber">Add Light Source</button>
+      <button id="btn-add-component" class="btn" style="background:#1f8f3a;color:white;border-color:#176c2c">Add Component</button>
       <button id="btn-import-state" class="btn">Import JSON</button>
       <button id="btn-export-state" class="btn">Export JSON</button>
       <span class="sep"></span>
@@ -56,7 +58,7 @@
       </div>
 
       <div class="section">
-        <h3>Add component</h3>
+        <!-- <h3>Add component</h3>
         <div class="group">
           <label>Optical System</label>
           <select id="sel-kind"></select>
@@ -72,7 +74,10 @@
           <label>Notes</label>
           <textarea id="inp-notes" rows="2" placeholder="(optional)"></textarea>
         </div>
-        <button id="btn-add" class="primary">Add</button>
+        <button id="btn-add" class="primary">Add</button> -->
+    <!-- System Tree -->
+       <div id="sidebar-tree" class="tree"></div>
+
       </div>
     </aside>
   </div>

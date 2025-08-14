@@ -60,7 +60,48 @@ export const actions = {
   setViewport(vp){ state={...state, viewport:{...state.viewport, ...vp}}; emit(); },
   setUi(p){ state={...state, ui:{...state.ui, ...p}}; emit(); },
   importState(newState){ mutate(_=> clone(newState), true); },
-  reset(){ mutate(_=> clone(initial), true); }
+  reset(){ mutate(_=> clone(initial), true); },
+  moveNodeToChain(nodeId, newChainId) {
+   mutate(st => {
+     const n = st.nodes.find(x => x.id === nodeId);
+     if (!n) return st;
+     n.chainId = newChainId;
+
+     // Compute a safe placement at the end of the target chain.
+     // (Don’t rely on window.App.UI here—avoid init order issues.)
+     const SPACING_X = 280, SPACING_Y = 140, START_X = 120, START_Y = 120;
+     const siblings = st.nodes
+       .filter(m => m.chainId === newChainId && m.kind !== 'ChainSummary' && m.id !== nodeId)
+       .sort((a,b) => a.x - b.x);
+     const last = siblings[siblings.length - 1];
+     if (last) {
+       n.x = last.x + SPACING_X;
+       n.y = last.y;
+     } else {
+       const row = Math.max(0, st.chains.findIndex(c => c.id === newChainId));
+       n.x = START_X;
+       n.y = START_Y + row * SPACING_Y;
+     }
+     return st;
+   }, true)
+  },
+  setNodeDisabled(nodeId, disabled) {
+    mutate(st => {
+      const n = st.nodes.find(x => x.id === nodeId);
+      if (n) n.disabled = !!disabled;
+      return st;
+    }, true);
+  },  
+  selectSingle(id){
+    mutate(st => { st.selection = { ids: id ? [id] : [] }; return st; }, true);
+  },
+  removeNode(id){
+    mutate(st => {
+      st.nodes = st.nodes.filter(n => n.id !== id);
+      st.selection.ids = (st.selection.ids||[]).filter(x => x !== id);
+      return st;
+    }, true);
+  },  
 };
 export function getState(){ return state; }
 
