@@ -18,13 +18,20 @@ export function mount(){
     actions.addNode({ chainId, kind: selectedKind, label: userLabel, x, y });
   }
   bindToolbar();
-  bindSidebarTree();
   bindNodeInteractions();
   bindLasso();
   bindViewport();
   bindLightSourceModal();
   bindNodeModal();
   subscribe(renderAll);
+  bindAddComponentModal();
+  if (window.App?.Store?.subscribe) {
+    window.App.Store.subscribe(()=>{ renderNodes(); renderSidebarTree(); });
+  }
+  window.App = window.App || {};
+  window.App.View = { fit: fitView };
+}
+
   bindSidebarTree();
   // Delete key: delete selected nodes (stash components if LS)
   document.addEventListener('keydown', (e)=>{
@@ -47,11 +54,3 @@ export function mount(){
       }
     });
   });
-  renderAll();
-  bindAddComponentModal();
-  if (window.App?.Store?.subscribe) {
-    window.App.Store.subscribe(()=>{ renderNodes(); renderSidebarTree(); });
-  }
-  window.App = window.App || {};
-  window.App.View = { fit: fitView };
-}

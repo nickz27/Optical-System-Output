@@ -20,55 +20,14 @@ function showH(y){
 
 export function bindNodeInteractions(){
   const layer=document.getElementById('nodes-layer');
-  layer.addEventListener('click',(e)=>{
-    const card=e.target.closest('.node'); if(!card) return;
-    const additive = e.ctrlKey || e.metaKey || e.shiftKey;
-    actions.select(card.id, additive);
-  });
-   if(!layer) return;
-    let lastClick = { id:null, t:0, x:0, y:0 };
-    const DBL_MS = 300, MOVE_TOL = 4;
-   layer.addEventListener('click', (e)=>{
-     const card = e.target.closest('.node');
-     const act  = window.App?.Store?.actions;
-     if(!act?.selectSingle) return;
-     act.selectSingle(card ? card.id : null)
-      const same =
-        lastClick.id === card.id &&
-        (now - lastClick.t) <= DBL_MS &&
-        Math.abs(e.clientX - lastClick.x) <= MOVE_TOL &&
-        Math.abs(e.clientY - lastClick.y) <= MOVE_TOL;
-      lastClick = { id: card.id, t: now, x: e.clientX, y: e.clientY };
-      if(!same) return;
-      const st = window.App.Store.getState();
-      const n = st.nodes.find(x=>x.id===card.id); if(!n) return;
-      if(n.kind === 'LightSource'){
-        window.App?.Events?.openLsModal && window.App.Events.openLsModal(n.chainId);
-      }else{
-        window.App?.Events?.openNodeModal && window.App.Events.openNodeModal(card.id);
-      }
-    });
-  function setTreeHover(nodeId, on){
-    window.App?.Sidebar?.highlight && window.App.Sidebar.highlight(nodeId, on);
-  }
-  layer.addEventListener('mouseenter', (e)=>{
-    const card = e.target.closest('.node'); if(!card) return;
-    setTreeHover(card.id, true);
-  }, true);
-  layer.addEventListener('mouseleave', (e)=>{
-    const card = e.target.closest('.node'); if(!card) return;
-    setTreeHover(card.id, false);
-  }, true);
+  if(!layer) return;
 
-  layer.addEventListener('dblclick',(e)=>{
-    const card = e.target.closest('.node'); if(!card) return;
-    const st = window.App.Store.getState();
-    const n = st.nodes.find(x=>x.id===card.id); if(!n) return;
-    if(n.kind === 'LightSource'){
-      window.App?.Events?.openLsModal && window.App.Events.openLsModal(n.chainId);
-    }else{
-      window.App?.Events?.openNodeModal && window.App.Events.openNodeModal(card.id);
-    }
+  // Single click => single selection (kept in Store so tree/board stay in sync)
+  layer.addEventListener('click',(e)=>{
+    const card=e.target.closest('.node');
+    const act = window.App?.Store?.actions;
+    if(!act?.selectSingle) return;
+    act.selectSingle(card ? card.id : null);
   });
 
   let drag=null;

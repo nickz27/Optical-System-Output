@@ -1,5 +1,4 @@
 import { actions } from '../../state/store.js';
-import { loadCatalog } from '../../core/catalog/catalog.js';
 
 function h(type, attrs={}, ...children){
   const el = document.createElement(type);
@@ -120,10 +119,9 @@ function bindTreeHandlers(root){
     const nodeId = item.getAttribute('data-node');
     if(!window.App?.Store?.actions?.selectSingle) return;
     window.App.Store.actions.selectSingle(nodeId || null);
-    // locally update selected row visual immediately
+    // keep visuals in sync immediately
     document.querySelectorAll('#sidebar-tree .tree-item.sel').forEach(el=>el.classList.remove('sel'));
     if (nodeId) item.classList.add('sel');
-
   });
 +
   // hover over tree item -> highlight both tree row and board card
@@ -169,11 +167,10 @@ function bindTreeHandlers(root){
   root.addEventListener('dragover', (e)=>{
     const overSource = e.target.closest('.tree-item.source');
     if (!overSource) return;
-    e.preventDefault();                 // allow drop
+    e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
-    // highlight ONLY the current target
-    document
-      .querySelectorAll('#sidebar-tree .tree-item.source.drop-target')
+    // Highlight only the current target
+    document.querySelectorAll('#sidebar-tree .tree-item.source.drop-target')
       .forEach(el => { if (el !== overSource) el.classList.remove('drop-target'); });
     overSource.classList.add('drop-target');
   })
@@ -195,6 +192,7 @@ function bindTreeHandlers(root){
      actions.endBatch && actions.endBatch();
      dragId = null
      window.requestAnimationFrame(()=> window.App?.Sidebar?.render && window.App.Sidebar.render());
+     
   });
    root.addEventListener('dragend', ()=>{
      root.querySelector('.dragging')?.classList.remove('dragging');
