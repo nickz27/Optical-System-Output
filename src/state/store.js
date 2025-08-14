@@ -104,14 +104,5 @@ export const actions = {
   },  
 };
 export function getState(){ return state; }
-
 window.App = window.App || {};
-window.App.getState = getState;
-window.App.actions = actions;
-window.App.Events = { ...(window.App.Events||{}), openLsModal: open, closeLsModal: close };
-
-window.App = window.App || {};
-window.App.Store = {
-  getState,
-  actions
-};
+window.App.Store = { getState, actions };
