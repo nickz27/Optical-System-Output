@@ -1,108 +1,138 @@
-import { uid } from '../core/util/id.js';
-import { saveState, loadState } from '../core/util/persist.js';
+// src/state/store.js
 
-const listeners = [];
-const initial = loadState() || {
-  nodes: [],
-  chains: [],
-  selection: { ids: [] },
-  viewport: { x:0, y:0, k:1 },
-  ui: { activeFunction: 'DRL', targetLumens: 100 }
+// ---------- State ----------
+const state = {
+  chains: [],                  // groups
+  nodes: [],                   // cards (LightSource or components)
+  selection: { ids: [] },      // single-select (we just keep 0/1 id here)
+  viewport: { x: 0, y: 0, k: 1 },
+  ui: { targetLumens: 0, activeFunction: '' }
 };
 
-let state = initial;
-let history = [];
-let future = [];
-let batch = { active:false, saved:false, label:null };
+// Ensure each chain has a default group box (for visual grouping)
+function hydrateBoxes(st){
+  st.chains.forEach((c, i) => {
+    if (!c.box) c.box = { x: 80 + (i*40), y: 60 + (i*40), w: 700, h: 320 };
+  });
+}
+hydrateBoxes(state);
 
-function clone(o){ return JSON.parse(JSON.stringify(o)); }
-export function subscribe(fn){ listeners.push(fn); return ()=>{ const i=listeners.indexOf(fn); if(i>=0) listeners.splice(i,1); }; }
-function emit(){ try{ saveState(state); }catch(e){} listeners.forEach(fn=>fn(state)); }
-function pushHistory(prev){ if(batch.active){ if(!batch.saved){ history.push(prev); future=[]; batch.saved=true; } } else { history.push(prev); future=[]; } }
-function mutate(mutator, track=true){ const prev = track ? clone(state) : null; state = mutator(clone(state)); if(track && prev) pushHistory(prev); emit(); }
+// ---------- Event bus ----------
+const listeners = new Set();
+export function subscribe(fn){
+  listeners.add(fn);
+  return () => listeners.delete(fn);
+}
+function emit(){ listeners.forEach(fn => fn()); }
 
+// Simple batching so multiple actions render once
+let batching = 0;
+function maybeEmit(){ if (batching === 0) emit(); }
+
+// All state updates go through here
+function mutate(updater, emitNow = true){
+  updater(state);
+  if (emitNow) maybeEmit();
+  return state;
+}
+
+// ---------- Actions ----------
 export const actions = {
-  beginBatch(label){ batch={active:true,saved:false,label:label||null}; },
-  endBatch(){ batch={active:false,saved:false,label:null}; },
+  beginBatch(label){ batching++; },
+  endBatch(){ if (batching > 0) batching--; maybeEmit(); },
 
-  undo(){ if(!history.length) return; const prev=history.pop(); future.push(clone(state)); state=prev; emit(); },
-  redo(){ if(!future.length) return; const next=future.pop(); history.push(clone(state)); state=next; emit(); },
-
+  // Groups
   addChain(){
-    const id = 'c'+uid();
-    mutate(st=>{ st.chains=[...st.chains,{id,label:'Chain '+(st.chains.length+1),ledCount:10,lmPerLed:100}]; return st; }, true);
+    const id = crypto.randomUUID();
+    mutate(st => {
+      const idx = st.chains.length;
+      st.chains.push({
+        id,
+        label: `Group ${idx + 1}`,
+        ledCount: 0,
+        lmPerLed: 0,
+        box: { x: 80 + (idx*40), y: 60 + (idx*40), w: 700, h: 320 }
+      });
+    });
     return id;
   },
   updateChain(chainId, patch){
-    mutate(st=>{ st.chains=st.chains.map(c=>c.id===chainId?{...c, ...patch}:c); return st; }, true);
+    mutate(st => {
+      const c = st.chains.find(x => x.id === chainId);
+      if (c) Object.assign(c, patch);
+    });
   },
 
-  setChainSource(chainId, ledCount, lmPerLed){
-    mutate(st=>{ st.chains=st.chains.map(c=>c.id===chainId?{...c,ledCount,lmPerLed}:c); return st; }, true);
-  },
-  addNode({chainId, kind, label, config, x, y}){
-    const id=uid('n');
-    mutate(st=>{ const node={id,chainId,kind,label:label||kind,config:config||{},x:x||100,y:y||100}; st.nodes=[...st.nodes,node]; st.selection={ids:[id]}; return st; }, true);
-    return id;
+  // Nodes
+  addNode(node){
+    mutate(st => {
+      const id = node.id || crypto.randomUUID();
+      st.nodes.push({ id, config:{}, ...node });
+    });
+    return state.nodes[state.nodes.length - 1].id;
   },
   updateNode(id, patch){
-    mutate(st=>{ st.nodes=st.nodes.map(n=>n.id===id?{...n,...patch,config:{...n.config, ...(patch.config||{})}}:n); return st; }, true);
-  },
-  removeSelected(){
-    mutate(st=>{ const ids=new Set(st.selection.ids); st.nodes=st.nodes.filter(n=>!ids.has(n.id)); st.selection={ids:[]}; return st; }, true);
-  },
-  select(id, additive=false){
-    const ids = new Set(state.selection.ids);
-    if(additive){ ids.has(id)?ids.delete(id):ids.add(id);} else { ids.clear(); ids.add(id); }
-    state={...state, selection:{ids:[...ids]}}; emit();
-  },
-  setSelection(ids){ state={...state, selection:{ids:[...ids]}}; emit(); },
-  setViewport(vp){ state={...state, viewport:{...state.viewport, ...vp}}; emit(); },
-  setUi(p){ state={...state, ui:{...state.ui, ...p}}; emit(); },
-  importState(newState){ mutate(_=> clone(newState), true); },
-  reset(){ mutate(_=> clone(initial), true); },
-  moveNodeToChain(nodeId, newChainId) {
-   mutate(st => {
-     const n = st.nodes.find(x => x.id === nodeId);
-     if (!n) return st;
-     n.chainId = newChainId;
-
-     // Compute a safe placement at the end of the target chain.
-     // (Don’t rely on window.App.UI here—avoid init order issues.)
-     const SPACING_X = 280, SPACING_Y = 140, START_X = 120, START_Y = 120;
-     const siblings = st.nodes
-       .filter(m => m.chainId === newChainId && m.kind !== 'ChainSummary' && m.id !== nodeId)
-       .sort((a,b) => a.x - b.x);
-     const last = siblings[siblings.length - 1];
-     if (last) {
-       n.x = last.x + SPACING_X;
-       n.y = last.y;
-     } else {
-       const row = Math.max(0, st.chains.findIndex(c => c.id === newChainId));
-       n.x = START_X;
-       n.y = START_Y + row * SPACING_Y;
-     }
-     return st;
-   }, true)
-  },
-  setNodeDisabled(nodeId, disabled) {
     mutate(st => {
-      const n = st.nodes.find(x => x.id === nodeId);
+      const n = st.nodes.find(x => x.id === id);
+      if (n) Object.assign(n, patch);
+    }, false);
+  },
+  setNodeDisabled(id, disabled){
+    mutate(st => {
+      const n = st.nodes.find(x => x.id === id);
       if (n) n.disabled = !!disabled;
-      return st;
-    }, true);
-  },  
-  selectSingle(id){
-    mutate(st => { st.selection = { ids: id ? [id] : [] }; return st; }, true);
+    });
   },
   removeNode(id){
     mutate(st => {
       st.nodes = st.nodes.filter(n => n.id !== id);
-      st.selection.ids = (st.selection.ids||[]).filter(x => x !== id);
-      return st;
-    }, true);
-  },  
+      if (st.selection.ids.includes(id)) st.selection.ids = [];
+    });
+  },
+
+  // Move node to another group (safe placement at the end of that group)
+  moveNodeToChain(nodeId, newChainId){
+    mutate(st => {
+      const n = st.nodes.find(x => x.id === nodeId);
+      if (!n) return;
+      n.chainId = newChainId;
+
+      const SPACING_X = 280, SPACING_Y = 140, START_X = 120, START_Y = 120;
+      const siblings = st.nodes
+        .filter(m => m.chainId === newChainId && m.id !== nodeId)
+        .sort((a,b) => a.x - b.x);
+      const last = siblings[siblings.length - 1];
+
+      if (last) {
+        n.x = last.x + SPACING_X;
+        n.y = last.y;
+      } else {
+        const row = Math.max(0, st.chains.findIndex(c => c.id === newChainId));
+        n.x = START_X;
+        n.y = START_Y + row * SPACING_Y;
+      }
+    });
+  },
+
+  // Selection (single-select)
+  selectSingle(id){
+    mutate(st => { st.selection = { ids: id ? [id] : [] }; });
+  },
+
+  // UI
+  setUi(patch){
+    mutate(st => { Object.assign(st.ui, patch); });
+  },
+
+  // Viewport
+  setViewport(vp){
+    mutate(st => { Object.assign(st.viewport, vp); });
+  }
 };
+
+// ---------- Accessors ----------
 export function getState(){ return state; }
+
+// Expose for convenience in console / other modules without import
 window.App = window.App || {};
-window.App.Store = { getState, actions };
+window.App.Store = { getState, actions, subscribe };
