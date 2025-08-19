@@ -1,4 +1,5 @@
 
+
 .group-box{
   position:relativee;
   border:2px solid rgba(255,255,255,0.18);
@@ -24,3 +25,13 @@
 #system-card{ margin-top:12px; padding:12px; border:1px solid rgba(255,255,255,0.15); border-radius:10px; background:rgba(255,255,255,0.03); }
 #system-card h4{ margin:0 0 6px 0; font-weight:600; opacity:.9; }
 #system-card .row{ display:flex; justify-content:space-between; margin:.25rem 0; }
+
+.grid-overlay { position:absolute; inset:0; pointer-events:none; }
+.grid-overlay .grid-cell {
+  border: 1px dashed rgba(80,160,220,.25);
+  pointer-events:auto;
+}
+.grid-overlay .grid-cell.over {
+  background: rgba(80,160,220,.15);
+  border-color: rgba(80,160,220,.6);
+}

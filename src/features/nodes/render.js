@@ -19,7 +19,7 @@ function nodeHtml(n){
     });
   }
   const title = (!isLight ? (n.config?.name || n.label || n.kind) : (n.label || n.kind));
-  return `<div class="node${isLight?' light':''}" id="${n.id}" style="left:${n.x}px;top:${n.y}px">
+   return `<div class="node${isLight?' light':''}" id="${n.id}" data-id="${n.id}" style="left:${n.x}px;top:${n.y}px">
     <div class="node-header" data-drag-handle><div class="node-title">${title}</div></div>
     <div class="node-body">${body}</div>
   </div>`;

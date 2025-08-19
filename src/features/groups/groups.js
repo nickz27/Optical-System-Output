@@ -68,7 +68,7 @@ function computeLayout(state){
   return { boardEl, chains, n, cols, rows, cellW, cellH, LEFT_PAD, TOP_PAD };
 }
 
-/** Draw group boxes with header + vertical separators based on item count. */
+/** Draw group boxes with header */
 export function renderGroupBoxes(state){
   const layer = document.getElementById('groups-layer');
   if (!layer) return;
@@ -115,17 +115,6 @@ export function renderGroupBoxes(state){
     header.appendChild(title);
     header.appendChild(stats);
     box.appendChild(header);
-
-    // vertical separators: evenly split by item count
-    const innerW = width - 2 * PAD;
-    for (let i = 1; i < count; i++) {
-      const sep = document.createElement('div');
-      sep.className = 'group-sep';
-      const x = PAD + Math.round(innerW * (i / count));
-      sep.style.left = x + 'px';
-      box.appendChild(sep);
-    }
-
     layer.appendChild(box);
   });
 }
