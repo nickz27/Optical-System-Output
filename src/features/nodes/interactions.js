@@ -3,6 +3,8 @@ import { actions, getState } from '../../state/store.js';
 import { renderBoard } from '../board/board.js';
 import { groupIdAtPoint } from '../groups/groups.js';
 
+function GE(){ return (window.__gridEnhance || {}); }
+
 const GRID = 16;
 const ALIGN = 6;
 const CARD_W = 260;
@@ -72,95 +74,177 @@ layer.addEventListener('click', (e) => {
   let drag = null;
   const START = 3;
 
-  layer.addEventListener('mousedown', (e)=>{
-    const handle = e.target.closest('[data-drag-handle]'); if(!handle) return;
-    const card = e.target.closest('.node'); if(!card) return;
+layer.addEventListener('mousedown', (e)=>{
+  const handle = e.target.closest('[data-drag-handle]'); if(!handle) return;
+  const card = e.target.closest('.node'); if(!card) return;
 
-    const st = getState();
-    const ids = new Set(st.selection.ids.length ? st.selection.ids : [card.id]);
-    const base = Array.from(ids).map(id=>{
-      const n = st.nodes.find(x=>x.id===id);
-      return { id, x:n.x, y:n.y };
-    });
-    const k = st.viewport?.k || 1;
-    drag = { sx:e.clientX, sy:e.clientY, base, firstId:card.id, moved:false, k };
-
-    actions.beginBatch && actions.beginBatch('drag');
-});
-
-  window.addEventListener('mousemove', (e)=>{
-    if(!drag) return;
-    const dx = (e.clientX - drag.sx) / drag.k;
-    const dy = (e.clientY - drag.sy) / drag.k;
-
-    if(!drag.moved && (Math.abs(dx) > START || Math.abs(dy) > START)) { drag.moved = true; if (typeof e.preventDefault==='function') e.preventDefault(); }
-    if(!drag.moved) return;
-
-    clearGuides();
-
-    // snap and alignment guides
-    const st = getState();
-    const firstBase = drag.base.find(b=>b.id===drag.firstId);
-    let nx = firstBase.x + dx;
-    let ny = firstBase.y + dy;
-    nx = Math.round(nx / GRID) * GRID;
-    ny = Math.round(ny / GRID) * GRID;
-
-    const self = new Set(drag.base.map(b=>b.id));
-    const others = st.nodes.filter(n=>!self.has(n.id));
-    let sx = 0, sy = 0;
-    const rect = { left:nx, top:ny, right:nx+CARD_W, bottom:ny+CARD_H, cx:nx+CARD_W/2, cy:ny+CARD_H/2 };
-
-    for(const o of others){
-      const el = document.getElementById(o.id);
-      const r = el?.getBoundingClientRect();
-      if(!r) continue;
-      const tx = [r.left, r.left + r.width/2, r.right];
-      const ty = [r.top,  r.top  + r.height/2, r.bottom];
-      const cx = [rect.left, rect.cx, rect.right];
-      const cy = [rect.top,  rect.cy, rect.bottom];
-
-      for(const a of cx){ for(const b of tx){ if(Math.abs(a-b)<=ALIGN){ sx = a-b; showV(a); } } }
-      for(const a of cy){ for(const b of ty){ if(Math.abs(a-b)<=ALIGN){ sy = a-b; showH(a); } } }
-    }
-
-    const adx = (nx + sx) - firstBase.x;
-    const ady = (ny + sy) - firstBase.y;
-
-    drag.base.forEach(b => actions.updateNode(b.id, { x:b.x + adx, y:b.y + ady }));
-    renderNodes();
-});
-
-  window.addEventListener('mouseup', ()=>{
-    if(!drag) return;
-
-    const st = getState();
-    const first = drag.base[0] && st.nodes.find(n=>n.id===drag.base[0].id);
-    if(first){
-      const nx = first.x, ny = first.y;
-      const cx = nx + CARD_W/2, cy = ny + CARD_H/2;
-
-      // Use the new hit-test to decide the destination group (or stash)
-      const target = groupIdAtPoint(st, cx, cy);
-      if (target) {
-        drag.base.forEach(b=>{
-          const n = st.nodes.find(x=>x.id===b.id);
-          if(!n || n.kind==='LightSource') return;
-          if (n.chainId !== target) actions.moveNodeToChain(n.id, target);
-          if (n.disabled) actions.setNodeDisabled(n.id, false);
-        });
-      } else {
-        // Stash: mark components disabled if outside any group box
-        drag.base.forEach(b=>{
-          const n = st.nodes.find(x=>x.id===b.id);
-          if(!n || n.kind==='LightSource') return;
-          actions.setNodeDisabled(n.id, true);
-        });
-      }
-    }
-
-    actions.endBatch && actions.endBatch();
-    drag = null;
-    clearGuides();
+  const st = getState();
+  const ids = new Set(st.selection.ids.length ? st.selection.ids : [card.id]);
+  const base = Array.from(ids).map(id=>{
+    const n = st.nodes.find(x=>x.id===id);
+    return { id, x:n.x, y:n.y };
   });
+  const k = st.viewport?.k || 1;
+  drag = { sx:e.clientX, sy:e.clientY, base, firstId:card.id, moved:false, k };
+
+  // 🔒 prevent grid reflows / shuffles while dragging
+  if (drag.firstId && GE().lockDrag) GE().lockDrag(drag.firstId);
+
+  actions.beginBatch && actions.beginBatch('drag');
+});
+
+window.addEventListener('mousemove', (e)=>{
+  if(!drag) return;
+  const dx = (e.clientX - drag.sx) / drag.k;
+  const dy = (e.clientY - drag.sy) / drag.k;
+
+  if(!drag.moved && (Math.abs(dx) > START || Math.abs(dy) > START)) { drag.moved = true; if (typeof e.preventDefault==='function') e.preventDefault(); }
+  if(!drag.moved) return;
+
+  clearGuides();
+
+  // snap and alignment guides
+  const st = getState();
+  const firstBase = drag.base.find(b=>b.id===drag.firstId);
+  let nx = firstBase.x + dx;
+  let ny = firstBase.y + dy;
+  nx = Math.round(nx / GRID) * GRID;
+  ny = Math.round(ny / GRID);
+
+  const self = new Set(drag.base.map(b=>b.id));
+  const others = st.nodes.filter(n=>!self.has(n.id));
+  let sx = 0, sy = 0;
+  const rect = { left:nx, top:ny, right:nx+CARD_W, bottom:ny+CARD_H, cx:nx+CARD_W/2, cy:ny+CARD_H/2 };
+
+  for(const o of others){
+    const el = document.getElementById(o.id);
+    const r = el?.getBoundingClientRect();
+    if(!r) continue;
+    const tx = [r.left, r.left + r.width/2, r.right];
+    const ty = [r.top,  r.top  + r.height/2, r.bottom];
+    const cx = [rect.left, rect.cx, rect.right];
+    const cy = [rect.top,  rect.cy, rect.bottom];
+
+    for(const a of cx){ for(const b of tx){ if(Math.abs(a-b)<=ALIGN){ sx = a-b; showV(a); } } }
+    for(const a of cy){ for(const b of ty){ if(Math.abs(a-b)<=ALIGN){ sy = a-b; showH(a); } } }
+  }
+
+  const adx = (nx + sx) - firstBase.x;
+  const ady = (ny + sy) - firstBase.y;
+
+  drag.base.forEach(b => actions.updateNode(b.id, { x:b.x + adx, y:b.y + ady }));
+  renderNodes();
+});
+
+window.addEventListener('mouseup', ()=>{
+  if(!drag) return;
+
+  const st = getState();
+  const first = drag.base[0] && st.nodes.find(n=>n.id===drag.base[0].id);
+  if(first){
+    const nx = first.x, ny = first.y;
+    const cx = nx + CARD_W/2, cy = ny + CARD_H/2;
+
+    // Use the hit-test to decide destination group (or stash)
+    const target = groupIdAtPoint(st, cx, cy);
+    if (target) {
+      // move selection into the chain and enable
+      drag.base.forEach(b=>{
+        const n = st.nodes.find(x=>x.id===b.id);
+        if(!n || n.kind==='LightSource') return;
+        if (n.chainId !== target) actions.moveNodeToChain(n.id, target);
+        if (n.disabled) actions.setNodeDisabled(n.id, false);
+      });
+
+      // --- SNAP TO GRID CELL + SWAP (for the primary dragged card) ---
+      try {
+        const boardEl = document.getElementById('board');
+        const boxEl =
+          document.getElementById('group-' + target) ||
+          document.querySelector(`.group-box[data-group-id="${target}"]`);
+        if (boardEl && boxEl) {
+          const br = boardEl.getBoundingClientRect();
+          const gr = boxEl.getBoundingClientRect();
+
+          // nodes that belong to this chain and are visible (not disabled)
+          const nodesIn = getState().nodes.filter(n => n.chainId === target && !n.disabled);
+
+          const ncount = nodesIn.length;
+          const cols = Math.ceil(Math.sqrt(Math.max(1, ncount)));
+          const rows = Math.ceil(ncount / cols);
+          const cw = gr.width / cols, ch = gr.height / rows;
+
+          // figure out which cell the primary drop center is in
+          const dropClientX = cx + br.left;
+          const dropClientY = cy + br.top;
+          let col = Math.floor((dropClientX - gr.left) / cw);
+          let row = Math.floor((dropClientY - gr.top)  / ch);
+          col = Math.max(0, Math.min(cols - 1, col));
+          row = Math.max(0, Math.min(rows - 1, row));
+
+          // target cell center (client coords)
+          const ccx = gr.left + col * cw + cw / 2;
+          const ccy = gr.top  + row * ch + ch / 2;
+
+          const movedId = drag.firstId;
+
+          // find current occupant of that cell (if any)
+          function centerOf(n){
+            const el = document.getElementById(n.id);
+            const r = el?.getBoundingClientRect();
+            return r ? { x: r.left + r.width/2, y: r.top + r.height/2 } : null;
+          }
+          let occupant = null, occDist = Infinity;
+          for (const n of nodesIn){
+            const c = centerOf(n); if (!c) continue;
+            const cCol = Math.floor((c.x - gr.left) / cw);
+            const cRow = Math.floor((c.y - gr.top ) / ch);
+            if (cCol === col && cRow === row) {
+              const d = Math.hypot(c.x - ccx, c.y - ccy);
+              if (d < occDist) { occDist = d; occupant = n; }
+            }
+          }
+
+          // compute final board-space x/y for moved card at cell center
+          const newX = Math.round((ccx - br.left) - (CARD_W / 2));
+          const newY = Math.round((ccy - br.top ) - (CARD_H / 2));
+          actions.updateNode(movedId, { x: newX, y: newY });
+
+          // if occupied, swap the occupant to the original pre-snap position
+          if (occupant && occupant.id !== movedId) {
+            const oldCx = nx + CARD_W/2 + br.left;
+            const oldCy = ny + CARD_H/2 + br.top;
+            const swapX = Math.round((oldCx - br.left) - (CARD_W / 2));
+            const swapY = Math.round((oldCy - br.top ) - (CARD_H / 2));
+            actions.updateNode(occupant.id, { x: swapX, y: swapY });
+          }
+        }
+      } catch (err) {
+        // non-fatal; keep going
+        console.warn('snap/swap failed', err);
+      }
+      // --- end SNAP TO GRID CELL + SWAP ---
+
+    } else {
+      // Stash: mark components disabled if outside any group box
+      drag.base.forEach(b=>{
+        const n = st.nodes.find(x=>x.id===b.id);
+        if(!n || n.kind==='LightSource') return;
+        actions.setNodeDisabled(n.id, true);
+      });
+    }
+  }
+
+  actions.endBatch && actions.endBatch();
+
+  // repaint once
+  renderNodes();
+
+  // 🔓 allow grid to reflow once after drop
+  if (GE().unlockDrag) GE().unlockDrag();
+  if (GE().refresh) GE().refresh();
+
+  drag = null;
+  clearGuides();
+});
 }

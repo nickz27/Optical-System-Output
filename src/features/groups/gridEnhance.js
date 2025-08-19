@@ -199,8 +199,15 @@
     });
   }
 
+let draggingId = null;
+let dragLocked = false;
+
+function lockDrag(id){ draggingId = id || null; dragLocked = true; }
+function unlockDrag(){ draggingId = null; dragLocked = false; }
+
+if (dragLocked && draggingId && nid === draggingId) return;
   // public hooks
-  window.__gridEnhance = { refresh };
+  window.__gridEnhance = { refresh, lockDrag, unlockDrag };
 
   if(document.readyState === 'loading'){
     document.addEventListener('DOMContentLoaded', ()=>{ refresh(); enableNodeDrag(); });
@@ -208,3 +215,4 @@
     refresh(); enableNodeDrag();
   }
 })();
+
