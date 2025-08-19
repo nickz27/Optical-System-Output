@@ -93,6 +93,8 @@ export function renderGroupBoxes(state){
 
     const box = document.createElement('div');
     box.className = 'group-box';
+    box.id = `group-${c.id}`;
+    box.dataset.groupId = c.id;
     box.style.position = 'absolute';
     box.style.left = left + 'px';
     box.style.top = top + 'px';

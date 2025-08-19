@@ -1,7 +1,7 @@
 
 
 .group-box{
-  position:relativee;
+  position:relative;
   border:2px solid rgba(255,255,255,0.18);
   border-radius:14px;
   background:rgba(255,255,255,0.025);
