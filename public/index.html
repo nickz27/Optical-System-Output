@@ -10,6 +10,8 @@
   <link rel="stylesheet" href="css/nodes.css">
   <link rel="stylesheet" href="css/modals.css">
   <link rel="stylesheet" href="css/utilities.css">
+  <link rel="stylesheet" href="css/groups.css">
+  <link rel="stylesheet" href="css/groups-responsive-overrides.css">
   <link rel="stylesheet" href="css/sidebar-tree.css">
 </head>
 <body>
@@ -22,7 +24,7 @@
       <span class="sep"></span>
       <button id="btn-import-catalog" class="btn">Import tables</button>
       <button id="btn-export-catalog" class="btn">Export tables</button>
-    </div>
+</div>
     <div class="right">
       <button id="btn-undo" class="btn">Undo</button>
       <button id="btn-redo" class="btn">Redo</button>
@@ -79,6 +81,7 @@
        <div id="sidebar-tree" class="tree"></div>
 
       </div>
+      <div id="system-card" class="section" aria-live="polite"></div>
     </aside>
   </div>
 
@@ -98,18 +101,35 @@
     <div class="modal-header" id="node-drag">Edit Component</div>
     <div class="modal-body">
       <div class="group"><label>Name</label><input id="ed-chain-label" type="text" placeholder="e.g., Light Pipe, Reflector, etc"></div>
+      <div class="group"><label>Name</label><input id="nm-name" type="text" placeholder="e.g., Component name"></div>
       <div class="group">
         <label>Optical System</label>
         <select id="nm-kind"></select>
       </div>
       <div id="nm-dynamic"></div>
-      <div class="group"><label>Label</label><input id="nm-label" type="text"></div>
       <div class="group"><label>Notes</label><textarea id="nm-notes" rows="2"></textarea></div>
     </div>
     <div class="modal-actions">
       <button id="btn-nm-ok" class="primary" type="button">OK</button>
     </div>
   </div>
+
+ 
+  <div id="add-comp-modal" class="modal">
+    <div class="modal-header" id="ac-drag">Add Component</div>
+    <div class="modal-body">
+      <div class="group">
+        <label>Component</label>
+        <select id="ac-kind"></select>
+      </div>
+      <div id="ac-dynamic"></div>
+    </div>
+    <div class="modal-actions">
+      <button id="btn-ac-close" type="button">Cancel</button>
+      <button id="btn-ac-ok" class="primary" type="button">Add</button>
+    </div>
+  </div>
+
 
  <script type="module" src="/src/main.js"></script>
 </body>

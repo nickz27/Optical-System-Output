@@ -1,53 +1,94 @@
 import { actions, getState } from '../../state/store.js';
 
-function center(modal){
-  const r=modal.getBoundingClientRect();
-  const x=Math.max(8,(window.innerWidth-r.width)/2);
-  const y=Math.max(8,(window.innerHeight-r.height)/2);
-  modal.style.left=x+'px'; modal.style.top=y+'px';
+function el(id){ return document.getElementById(id); }
+
+let __currentChainId = null;
+
+function recomputeTotal(){
+  const count = parseFloat(el('ed-led-count')?.value || '0') || 0;
+  const lm = parseFloat(el('ed-led-lm')?.value || '0') || 0;
+  const tot = (count * lm) || 0;
+  if (el('ed-led-total')) el('ed-led-total').value = String(tot);
 }
 
-export function bindLightSourceModal(){
-  const modal=document.getElementById('ls-modal'); const header=document.getElementById('ls-drag'); if(!modal||!header) return;
-  header.addEventListener('pointerdown',(e)=>{
-    e.preventDefault(); header.setPointerCapture(e.pointerId);
-    const start={x:e.clientX,y:e.clientY,left:parseFloat(getComputedStyle(modal).left)||0,top:parseFloat(getComputedStyle(modal).top)||0};
-    const onMove=(ev)=>{ modal.style.left=(start.left+ev.clientX-start.x)+'px'; modal.style.top=(start.top+ev.clientY-start.y)+'px'; };
-    const onUp=()=>{ header.releasePointerCapture(e.pointerId); header.removeEventListener('pointermove',onMove); header.removeEventListener('pointerup',onUp); };
-    header.addEventListener('pointermove',onMove); header.addEventListener('pointerup',onUp);
-  });
-  document.getElementById('btn-ls-ok')?.addEventListener('click',()=>{
-    actions.beginBatch('edit-light-source');
-    const lm = Number(document.getElementById('ed-led-lm').value)||0;
-    const ct = parseInt(document.getElementById('ed-led-count').value,10)||0;
-    const st = getState();
-    const chainId = st.selection.ids.length? st.nodes.find(n=>n.id===st.selection.ids[0])?.chainId : st.chains[0]?.id;
-    if(chainId){
-      const label = document.getElementById('ed-chain-label')?.value || (getState().chains.find(c=>c.id===chainId)?.label) || '';
-      actions.updateChain(chainId, { label });
-      actions.setChainSource(chainId, ct, lm);
-    }
-    actions.endBatch();
-    close();
-  });
-  function open(chainId){
-    modal.classList.add('show');
-    const st=getState(); const c=st.chains.find(x=>x.id===chainId) || st.chains[0];
-    document.getElementById('ed-led-lm').value=String(c?.lmPerLed||0);
-    const chainLabelEl = document.getElementById('ed-chain-label'); if(chainLabelEl) chainLabelEl.value = c?.label || '';
-    document.getElementById('ed-led-count').value=String(c?.ledCount||0);
-    const recompute=()=>{ const lm=Number(document.getElementById('ed-led-lm').value)||0; const ct=parseInt(document.getElementById('ed-led-count').value,10)||0; document.getElementById('ed-led-total').value=String(lm*ct); };
-    ['input','change','keyup'].forEach(evt=>{
-      document.getElementById('ed-led-lm').addEventListener(evt,recompute);
-      document.getElementById('ed-led-count').addEventListener(evt,recompute);
-    });
-    recompute(); center(modal);
+export function open(chainId, nodeId){
+  window.__lsNodeId = nodeId;
+  const st = getState();
+  const c = (st.chains || []).find(x => x.id === chainId);
+  if(!c){ console.warn('[LS Modal] chain not found for id', chainId); return; }
+  __currentChainId = chainId;
+
+  // fill inputs
+  if (el('ed-chain-label')) {
+    const st2 = getState();
+    const node = (st2.nodes||[]).find(n=>n.id===nodeId);
+    el('ed-chain-label').value = (node?.label || 'Light Source');
   }
-  function close(){ modal.classList.remove('show'); }
-    window.App = window.App || {};
-    window.App.Events = { ...(window.App.Events||{}), openLsModal: open, closeLsModal: close };
+  if (el('ed-led-count'))  el('ed-led-count').value  = String(c.ledCount ?? 0);
+  if (el('ed-led-lm'))     el('ed-led-lm').value     = String(c.lmPerLed ?? 0);
+  recomputeTotal();
 
+  // live recompute
+  if (el('ed-led-count')) el('ed-led-count').oninput = recomputeTotal;
+  if (el('ed-led-lm'))    el('ed-led-lm').oninput    = recomputeTotal;
+
+  const modal = el('ls-modal');
+  if (modal){
+    modal.dataset.chainId = chainId;
+    modal.classList.add('show');
+    modal.style.zIndex = 10000;
+  }
 }
 
+export function close(){
+  const modal = el('ls-modal');
+  if (modal){
+    delete modal.dataset.chainId;
+    modal.classList.remove('show');
+  }
+  __currentChainId = null;
+}
+
+function save(){
+  const chainId = __currentChainId || el('ls-modal')?.dataset?.chainId;
+  if (!chainId){ console.warn('[LS Modal] no chainId to save'); return close(); }
+
+  const patchChain = {
+    ledCount: parseFloat(el('ed-led-count')?.value || '0') || 0,
+    lmPerLed: parseFloat(el('ed-led-lm')?.value || '0') || 0
+  };
+  const name = el('ed-chain-label')?.value ?? '';
+  // Update LightSource node label (card title)
+  if (window.__lsNodeId) actions.updateNode(window.__lsNodeId, { label: name });
+  // Update chain props for LEDs/lm
+  actions.updateChain(chainId, patchChain);
+  close();
+}
+
+export function bind(){
+  el('btn-ls-close')?.addEventListener('click', close);
+  el('btn-ls-ok')?.addEventListener('click', save);
+
+  // drag support
+  const hdr = el('ls-drag');
+  hdr?.addEventListener('mousedown', (e) => {
+    const m = el('ls-modal');
+    if (!m) return;
+    const drag = { sx: e.clientX, sy: e.clientY, left: m.offsetLeft, top: m.offsetTop };
+    function mv(ev){
+      m.style.left = (drag.left + (ev.clientX - drag.sx)) + 'px';
+      m.style.top  = (drag.top  + (ev.clientY - drag.sy)) + 'px';
+      m.style.transform = 'translate(0,0)';
+    }
+    function up(){
+      document.removeEventListener('mousemove', mv);
+      document.removeEventListener('mouseup', up);
+    }
+    document.addEventListener('mousemove', mv);
+    document.addEventListener('mouseup', up);
+  });
+}
+
+// expose to global event bus used by interactions.js
 window.App = window.App || {};
-window.App.Events = { ...(window.App.Events||{}), openLsModal: open, closeLsModal: close };
+window.App.Events = { ...(window.App.Events || {}), openLsModal: open, closeLsModal: close };

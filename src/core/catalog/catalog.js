@@ -1,37 +1,19 @@
-import opticalSystems from './defaults/opticalSystems.js';
-import materials from './defaults/materials.js';
-import textures from './defaults/textures.js';
-import lampFunctions from './defaults/lampFunctions.js';
-import { loadTables, saveTables } from '../util/persist.js';
 
-export function buildTables(raw){
-  return {
-    opticalSystems: raw.opticalSystems,
-    materials: raw.materials,
-    textures: raw.textures,
-    lampFunctions: raw.lampFunctions
-  };
-}
-
-export function loadCatalog(){
-  const o = loadTables();
-  const raw = o || { opticalSystems, materials, textures, lampFunctions };
-  return buildTables(raw);
-}
-
-export function saveCatalog(tables){ saveTables(tables); }
-
-export function getSystemsList(tables){
-  return Object.entries(tables.opticalSystems).map(([key, val]) => ({ key, label: val.label || key }));
-}
-export function getFactorsFor(tables, kind){
-  return tables.opticalSystems[kind]?.factors || [];
-}
-export function getOptionsFor(tables, kind, key){
-  const f = getFactorsFor(tables, kind).find(x=>x.key===key);
-  if(!f) return [];
-  if(f.source === 'materials'){ return Object.keys(tables.materials); }
-  if(f.source === 'textures'){ return Object.keys(tables.textures); }
-  if(f.source === 'inline'){ return Object.keys(f.choices || {}); }
-  return [];
-}
+let _catalog = {
+  LightPipe: {
+    label: "Light Pipe",
+    modifiers: [
+      { key:'type', label:'type', input:'select', options:['Single','Double']},
+      { key:'material', label:'material', input:'select', options:['PMMA','PC']},
+      { key:'texture', label:'texture', input:'select', options:['MT11020','MT11030','MT11040']},
+      { key:'lengthMm', label:'abs.', input:'number', step:1, min:0 }
+    ],
+    factors: {
+      type: { Single:{min:0.40,max:0.50}, Double:{min:0.35,max:0.45} },
+      material: { PMMA:{min:0.98,max:0.99}, PC:{min:0.96,max:0.98} },
+      texture: { MT11020:{min:0.60,max:0.65}, MT11030:{min:0.50,max:0.55}, MT11040:{min:0.40,max:0.45} }
+    }
+  }
+};
+export function loadCatalog(){ return _catalog; }
+export function setCatalog(obj){ _catalog = obj || _catalog; }

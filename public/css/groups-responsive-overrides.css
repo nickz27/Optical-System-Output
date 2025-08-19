@@ -1,0 +1,4 @@
+/* Ensure group box header remains visible and content can scroll internally if used */
+.group-box{ display:flex; flex-direction:column; overflow:hidden; }
+.group-box .header{ flex:0 0 36px; display:flex; align-items:center; }
+.group-box .content{ flex:1 1 auto; min-height:0; overflow:auto; }

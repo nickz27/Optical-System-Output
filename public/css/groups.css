@@ -1,1 +1,26 @@
-.group-box { box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+
+.group-box{
+  position:relativee;
+  border:2px solid rgba(255,255,255,0.18);
+  border-radius:14px;
+  background:rgba(255,255,255,0.025);
+  box-shadow: 0 6px 18px rgba(0,0,0,.25) inset;
+  pointer-events:none;
+}
+.group-box .header{
+  position:absolute; left:0; right:0; top:0; height:36px;
+  display:flex; align-items:center; gap:.75rem;
+  padding:0 .75rem;
+  border-bottom:1px solid rgba(255,255,255,0.12);
+  background:rgba(0,0,0,0.2);
+  backdrop-filter: blur(3px);
+  border-top-left-radius:12px; border-top-right-radius:12px;
+  pointer-events:none;
+}
+.group-box .header .title{ font-weight:600; opacity:.9; }
+.group-box .header .stats{ margin-left:auto; font-variant-numeric:tabular-nums; opacity:.9; }
+.group-sep{ position:absolute; top:36px; bottom:8px; width:0; border-left:1px dashed rgba(255,255,255,0.25); }
+
+#system-card{ margin-top:12px; padding:12px; border:1px solid rgba(255,255,255,0.15); border-radius:10px; background:rgba(255,255,255,0.03); }
+#system-card h4{ margin:0 0 6px 0; font-weight:600; opacity:.9; }
+#system-card .row{ display:flex; justify-content:space-between; margin:.25rem 0; }

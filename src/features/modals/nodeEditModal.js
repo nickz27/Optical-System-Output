@@ -1,5 +1,27 @@
 import { actions, getState } from '../../state/store.js';
-import { loadCatalog, getSystemsList, getFactorsFor, getOptionsFor } from '../../core/catalog/catalog.js';
+
+// Derived helpers since catalog.js only exports loadCatalog/setCatalog
+function getSystemsList(tables){
+  return Object.keys(tables).map(key => ({ key, label: tables[key]?.label || key }));
+}
+function getFactorsFor(tables, kind){
+  const spec = tables[kind]?.modifiers || [];
+  return spec.map(m => ({
+    key: m.key,
+    label: m.label ?? m.key,
+    input: m.input ?? 'text',
+    min: m.min,
+    max: m.max,
+    step: m.step,
+    options: m.options || []
+  }));
+}
+function getOptionsFor(tables, kind, key){
+  const mods = tables[kind]?.modifiers || [];
+  const m = mods.find(x => x.key === key);
+  return m?.options || [];
+}
+import { loadCatalog } from '../../core/catalog/catalog.js';
 
 function center(modal){
   const r=modal.getBoundingClientRect();
@@ -46,9 +68,9 @@ export function bindNodeModal(){
       const el=document.getElementById('nm-'+f.key);
       cfg[f.key] = (f.input==='number')? Number(el.value||0): el.value;
     });
-    const label = document.getElementById('nm-label').value || tables.opticalSystems[kind]?.label || kind;
+    const name = (document.getElementById('nm-name')?.value || '').trim();
     const notes = document.getElementById('nm-notes').value||'';
-    actions.updateNode(id,{ kind, label, config: { ...cfg, notes } });
+    actions.updateNode(id,{ kind, config: { ...cfg, name, notes } });
     close();
   });
   function open(nodeId){
@@ -58,7 +80,7 @@ export function bindNodeModal(){
     modal.classList.add('show'); center(modal);
     kindSel.innerHTML=''; getSystemsList(tables).forEach(k=>{ const o=document.createElement('option'); o.value=k.key; o.textContent=k.label; kindSel.appendChild(o); });
     kindSel.value=n.kind;
-    document.getElementById('nm-label').value = n.label || '';
+    const nmName = document.getElementById('nm-name'); if(nmName) nmName.value = n.config?.name || n.label || '';
     document.getElementById('nm-notes').value = n.config?.notes || '';
     buildDynamic(document.getElementById('nm-dynamic'), tables, n.kind, n.config);
     kindSel.onchange = ()=> buildDynamic(document.getElementById('nm-dynamic'), tables, kindSel.value, {});

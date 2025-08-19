@@ -1,138 +1,115 @@
-// src/state/store.js
 
-// ---------- State ----------
+// src/state/store.js
 const state = {
-  chains: [],                  // groups
-  nodes: [],                   // cards (LightSource or components)
-  selection: { ids: [] },      // single-select (we just keep 0/1 id here)
+  chains: [],
+  nodes: [],
+  selection: { ids: [] },
   viewport: { x: 0, y: 0, k: 1 },
   ui: { targetLumens: 0, activeFunction: '' }
 };
 
-// Ensure each chain has a default group box (for visual grouping)
-function hydrateBoxes(st){
-  st.chains.forEach((c, i) => {
-    if (!c.box) c.box = { x: 80 + (i*40), y: 60 + (i*40), w: 700, h: 320 };
-  });
-}
-hydrateBoxes(state);
-
-// ---------- Event bus ----------
 const listeners = new Set();
 export function subscribe(fn){
   listeners.add(fn);
   return () => listeners.delete(fn);
 }
 function emit(){ listeners.forEach(fn => fn()); }
-
-// Simple batching so multiple actions render once
 let batching = 0;
 function maybeEmit(){ if (batching === 0) emit(); }
 
-// All state updates go through here
 function mutate(updater, emitNow = true){
   updater(state);
   if (emitNow) maybeEmit();
   return state;
 }
 
-// ---------- Actions ----------
 export const actions = {
-  beginBatch(label){ batching++; },
+  beginBatch(){ batching++; },
   endBatch(){ if (batching > 0) batching--; maybeEmit(); },
 
-  // Groups
+  reset(){
+    const keepUi = JSON.parse(JSON.stringify(state.ui || {}));
+    state.chains = [];
+    state.nodes = [];
+    state.selection = { ids: [] };
+    state.viewport = { x:0, y:0, k:1 };
+    state.ui = keepUi;
+  },
+
   addChain(){
     const id = crypto.randomUUID();
-    mutate(st => {
-      const idx = st.chains.length;
-      st.chains.push({
-        id,
-        label: `Group ${idx + 1}`,
-        ledCount: 0,
-        lmPerLed: 0,
-        box: { x: 80 + (idx*40), y: 60 + (idx*40), w: 700, h: 320 }
-      });
-    });
+    state.chains.push({ id, label: `Group ${state.chains.length+1}`, ledCount:0, lmPerLed:0 });
+    maybeEmit();
     return id;
   },
+
   updateChain(chainId, patch){
-    mutate(st => {
-      const c = st.chains.find(x => x.id === chainId);
-      if (c) Object.assign(c, patch);
-    });
+    const c = state.chains.find(x=>x.id===chainId);
+    if (c) Object.assign(c, patch);
+    maybeEmit();
   },
 
-  // Nodes
   addNode(node){
-    mutate(st => {
-      const id = node.id || crypto.randomUUID();
-      st.nodes.push({ id, config:{}, ...node });
-    });
-    return state.nodes[state.nodes.length - 1].id;
+    const id = node.id || crypto.randomUUID();
+    state.nodes.push({ id, config:{}, ...node });
+    maybeEmit();
+    return id;
   },
+
   updateNode(id, patch){
-    mutate(st => {
-      const n = st.nodes.find(x => x.id === id);
-      if (n) Object.assign(n, patch);
-    }, false);
+    const n = state.nodes.find(x=>x.id===id);
+    if (n) Object.assign(n, patch);
+    maybeEmit();
   },
+
   setNodeDisabled(id, disabled){
-    mutate(st => {
-      const n = st.nodes.find(x => x.id === id);
-      if (n) n.disabled = !!disabled;
-    });
+    const n = state.nodes.find(x=>x.id===id);
+    if (n) n.disabled = !!disabled;
+    maybeEmit();
   },
+
   removeNode(id){
-    mutate(st => {
-      st.nodes = st.nodes.filter(n => n.id !== id);
-      if (st.selection.ids.includes(id)) st.selection.ids = [];
-    });
+    state.nodes = state.nodes.filter(n => n.id !== id);
+    if (state.selection.ids.includes(id)) state.selection.ids = [];
+    maybeEmit();
   },
 
-  // Move node to another group (safe placement at the end of that group)
   moveNodeToChain(nodeId, newChainId){
-    mutate(st => {
-      const n = st.nodes.find(x => x.id === nodeId);
-      if (!n) return;
-      n.chainId = newChainId;
+    const n = state.nodes.find(x=>x.id===nodeId);
+    if (!n) return;
+    n.chainId = newChainId;
 
-      const SPACING_X = 280, SPACING_Y = 140, START_X = 120, START_Y = 120;
-      const siblings = st.nodes
-        .filter(m => m.chainId === newChainId && m.id !== nodeId)
-        .sort((a,b) => a.x - b.x);
-      const last = siblings[siblings.length - 1];
-
-      if (last) {
-        n.x = last.x + SPACING_X;
-        n.y = last.y;
-      } else {
-        const row = Math.max(0, st.chains.findIndex(c => c.id === newChainId));
-        n.x = START_X;
-        n.y = START_Y + row * SPACING_Y;
-      }
-    });
+    const SPACING_X = 280, SPACING_Y = 140, START_X = 120, START_Y = 120;
+    const siblings = state.nodes
+      .filter(m => m.chainId === newChainId && m.id !== nodeId)
+      .sort((a,b) => a.x - b.x);
+    const last = siblings[siblings.length - 1];
+    if (last) {
+      n.x = last.x + SPACING_X;
+      n.y = last.y;
+    } else {
+      const row = Math.max(0, state.chains.findIndex(c => c.id === newChainId));
+      n.x = START_X;
+      n.y = START_Y + row * SPACING_Y;
+    }
+    maybeEmit();
   },
 
-  // Selection (single-select)
   selectSingle(id){
-    mutate(st => { st.selection = { ids: id ? [id] : [] }; });
+    state.selection = { ids: id ? [id] : [] };
+    maybeEmit();
   },
 
-  // UI
   setUi(patch){
-    mutate(st => { Object.assign(st.ui, patch); });
+    Object.assign(state.ui, patch);
+    maybeEmit();
   },
 
-  // Viewport
   setViewport(vp){
-    mutate(st => { Object.assign(st.viewport, vp); });
+    Object.assign(state.viewport, vp);
+    maybeEmit();
   }
 };
 
-// ---------- Accessors ----------
 export function getState(){ return state; }
-
-// Expose for convenience in console / other modules without import
-window.App = window.App || {};
-window.App.Store = { getState, actions, subscribe };
+window.App = window.App || {}; window.App.Store = { getState, actions, subscribe };
