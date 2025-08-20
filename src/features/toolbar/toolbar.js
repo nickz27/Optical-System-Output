@@ -2,6 +2,7 @@
 // Targets the styled Add Light Source button (#btn-add-light-source).
 
 import { actions, getState } from '../../state/store.js';
+import { renderNodes } from '../nodes/render.js';          // ⬅️ add this
 
 let __toolbarBound = false;
 
@@ -62,6 +63,11 @@ function onAddLight() {
       const y = Math.round(rect.top + rect.header + 16); // top content area
       actions.updateNode(nodeId, { x, y });
     }
+
+    // 3) ⬇️ ensure the new node is in the DOM, then reflow the grid to assign a cell
+    renderNodes();
+    window.__gridEnhance?.refresh?.();
+
   } catch (e) { /* no-op */ }
 }
 

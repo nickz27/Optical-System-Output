@@ -2,18 +2,28 @@
 // Dynamic Group Grid v2 (overlay cells + highlight + snap/swap)
 // Non-invasive: does not change groups.js exports or app state.
 // Selector fix: GROUP_BOX_SELECTOR = '.group-box'
+// Option B: Freeze rows/cols and cell assignments during drag; overlay still updates.
 //
 (function(){
   const GROUP_LAYER_SELECTOR = '#groups-layer, .groups-layer';
-  const GROUP_BOX_SELECTOR   = '.group-box';  // <-- FIXED selector
+  const GROUP_BOX_SELECTOR   = '.group-box';
   const BOARD_SELECTOR       = '#board';
   const NODE_SELECTOR        = '.node';
 
   // Map: groupId -> { rows, cols, ids:[nodeId|null,...] }
   const gridState = new Map();
 
+  // Drag freeze state (Option B)
+  let dragLocked = false;
+  let draggingId = null;             // id of the currently dragged node (if any)
+  let frozen = null;                 // Map<groupId, {rows, cols, ids}>
+
   function bySel(root, sel){ return root ? Array.from(root.querySelectorAll(sel)) : []; }
-  function gridDims(n){ const cols=Math.ceil(Math.sqrt(Math.max(1,n))); const rows=Math.ceil(n/cols); return {rows,cols}; }
+  function gridDims(n){
+    const cols = Math.ceil(Math.sqrt(Math.max(1,n)));
+    const rows = Math.ceil(n/cols);
+    return {rows, cols};
+  }
   function rect(el){ return el.getBoundingClientRect(); }
   function nodeCenter(el){ const r=rect(el); return { x:r.left+r.width/2, y:r.top+r.height/2 }; }
   function idOf(el){ return el?.dataset?.id || el?.id || null; }
@@ -73,20 +83,26 @@
     return ol;
   }
 
-  function computeOwnership(groups, nodes){
-    const map = new Map();
-    for(const g of groups){
-      const gr = rect(g.box);
-      const inNodes = nodes.filter(n=>{
-        const c = nodeCenter(n);
-        return c.x>=gr.left && c.x<=gr.right && c.y>=gr.top && c.y<=gr.bottom;
-      });
-      map.set(g.id, inNodes);
-    }
-    return map;
-  }
-
+ function computeOwnership(groups, nodes){
+   const map = new Map();
+   // index nodes by data-chain-id (falls back to dataset.id if needed)
+   const byChain = new Map();
+   for (const el of nodes) {
+     const cid = el?.dataset?.chainId || null;
+     if (!cid) continue;
+     if (!byChain.has(cid)) byChain.set(cid, []);
+     byChain.get(cid).push(el);
+   }
+   for (const g of groups) {
+     const arr = byChain.get(String(g.id)) || [];
+     map.set(g.id, arr);
+   }
+   return map;
+ }
   function refresh(){
+    // NOTE: In Option B we do NOT early-return when dragging.
+    // We still draw/maintain overlays, but we freeze rows/cols + ids.
+
     const boardEl = document.querySelector(BOARD_SELECTOR);
     if(!boardEl) return;
 
@@ -96,49 +112,73 @@
     const groups = boxes.map(b=>({ box:b, id: gidOf(b) })).filter(g=>g.id);
 
     const allNodes = Array.from(document.querySelectorAll(NODE_SELECTOR));
-
     const ownership = computeOwnership(groups, allNodes);
 
     for(const g of groups){
       const nodes = ownership.get(g.id) || [];
       const n = nodes.length;
-      if(n===0){ 
+
+      if(n===0){
         gridState.delete(g.id);
         // still ensure empty overlay to make drop target obvious
         ensureOverlay(g.box, 1, 1);
         continue;
       }
 
-      const {rows, cols} = gridDims(n);
-      const total = rows*cols;
+      // Freeze rows/cols (and ids) if we have a frozen snapshot
+      const frozenSt = dragLocked ? (frozen && frozen.get(g.id)) : null;
+
+      const dims = frozenSt ? { rows: frozenSt.rows, cols: frozenSt.cols } : gridDims(n);
+      const rows = dims.rows;
+      const cols = dims.cols;
+      const total = rows * cols;
 
       let state = gridState.get(g.id);
       if(!state) state = { rows, cols, ids: new Array(total).fill(null) };
 
-      // expand/shrink preserving placement
-      const next = new Array(total).fill(null);
-      const ids = nodes.map(idOf).filter(Boolean);
-
-      for(let i=0;i<Math.min(state.ids.length, next.length);i++){
-        if(state.ids[i] && ids.includes(state.ids[i])) next[i] = state.ids[i];
-      }
-      for(const nid of ids){
-        if(!next.includes(nid)){
-          const spot = next.indexOf(null);
-          if(spot>=0) next[spot] = nid;
+      // Reconcile ids
+      if (dragLocked && frozenSt) {
+        // Use the exact frozen assignment (copy)
+        state.rows = rows;
+        state.cols = cols;
+        state.ids  = frozenSt.ids.slice(0, total);
+        // If the frozen ids array is shorter than total (rare), pad nulls
+        if (state.ids.length < total) {
+          state.ids = state.ids.concat(new Array(total - state.ids.length).fill(null));
         }
+      } else {
+        // Normal (non-drag) reconciliation while preserving placements
+        const next = new Array(total).fill(null);
+        const idsNow = nodes.map(idOf).filter(Boolean);
+
+        // keep existing placements where possible
+        for(let i=0;i<Math.min(state.ids.length, next.length);i++){
+          if(state.ids[i] && idsNow.includes(state.ids[i])) next[i] = state.ids[i];
+        }
+        // place any new ids into first empty
+        for(const nid of idsNow){
+          if(!next.includes(nid)){
+            const spot = next.indexOf(null);
+            if(spot>=0) next[spot] = nid;
+          }
+        }
+        state.rows = rows; state.cols = cols; state.ids = next;
       }
-      state.rows = rows; state.cols = cols; state.ids = next;
+
       gridState.set(g.id, state);
 
       const overlay = ensureOverlay(g.box, rows, cols);
 
-      // position nodes to cell centers
+      // position nodes to cell centers (DOM write)
+      // Skip the currently dragged node while locked, so drag remains smooth.
       const br = rect(g.box);
       state.ids.forEach((nid, idx)=>{
         if(!nid) return;
+        if (dragLocked && draggingId && nid === draggingId) return;
+
         const el = nodes.find(n=>idOf(n)===nid);
         if(!el) return;
+
         const col = idx % cols;
         const row = Math.floor(idx / cols);
         const cw = br.width / cols, ch = br.height / rows;
@@ -199,13 +239,23 @@
     });
   }
 
-let draggingId = null;
-let dragLocked = false;
+  // Lock / unlock API (Option B)
+  function lockDrag(id){
+    dragLocked = true;
+    draggingId = id || null;
 
-function lockDrag(id){ draggingId = id || null; dragLocked = true; }
-function unlockDrag(){ draggingId = null; dragLocked = false; }
+    // snapshot current per-group grid state
+    frozen = new Map();
+    for (const [gid, st] of gridState){
+      frozen.set(gid, { rows: st.rows, cols: st.cols, ids: st.ids.slice() });
+    }
+  }
+  function unlockDrag(){
+    dragLocked = false;
+    draggingId = null;
+    frozen = null;
+  }
 
-if (dragLocked && draggingId && nid === draggingId) return;
   // public hooks
   window.__gridEnhance = { refresh, lockDrag, unlockDrag };
 
@@ -215,4 +265,3 @@ if (dragLocked && draggingId && nid === draggingId) return;
     refresh(); enableNodeDrag();
   }
 })();
-

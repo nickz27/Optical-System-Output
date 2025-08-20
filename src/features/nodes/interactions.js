@@ -10,6 +10,10 @@ const ALIGN = 6;
 const CARD_W = 260;
 const CARD_H = 100;
 
+
+
+
+
 // FIX25 dblclick detection
 let __lastClick = { id: null, t: 0, x: 0, y: 0 };
 const DBL_MS = 300; // ms
@@ -87,8 +91,9 @@ layer.addEventListener('mousedown', (e)=>{
   const k = st.viewport?.k || 1;
   drag = { sx:e.clientX, sy:e.clientY, base, firstId:card.id, moved:false, k };
 
-  // 🔒 prevent grid reflows / shuffles while dragging
-  if (drag.firstId && GE().lockDrag) GE().lockDrag(drag.firstId);
+  // 🔒 prevent grid reflows
+ const lockId = card.dataset?.id || card.id;
+ if (lockId && GE().lockDrag) GE().lockDrag(lockId);
 
   actions.beginBatch && actions.beginBatch('drag');
 });
@@ -97,44 +102,26 @@ window.addEventListener('mousemove', (e)=>{
   if(!drag) return;
   const dx = (e.clientX - drag.sx) / drag.k;
   const dy = (e.clientY - drag.sy) / drag.k;
-
   if(!drag.moved && (Math.abs(dx) > START || Math.abs(dy) > START)) { drag.moved = true; if (typeof e.preventDefault==='function') e.preventDefault(); }
   if(!drag.moved) return;
 
   clearGuides();
 
-  // snap and alignment guides
+  // snap to grid only (no alignment guides)
   const st = getState();
   const firstBase = drag.base.find(b=>b.id===drag.firstId);
   let nx = firstBase.x + dx;
   let ny = firstBase.y + dy;
   nx = Math.round(nx / GRID) * GRID;
-  ny = Math.round(ny / GRID);
+  ny = Math.round(ny / GRID) * GRID;
 
-  const self = new Set(drag.base.map(b=>b.id));
-  const others = st.nodes.filter(n=>!self.has(n.id));
-  let sx = 0, sy = 0;
-  const rect = { left:nx, top:ny, right:nx+CARD_W, bottom:ny+CARD_H, cx:nx+CARD_W/2, cy:ny+CARD_H/2 };
-
-  for(const o of others){
-    const el = document.getElementById(o.id);
-    const r = el?.getBoundingClientRect();
-    if(!r) continue;
-    const tx = [r.left, r.left + r.width/2, r.right];
-    const ty = [r.top,  r.top  + r.height/2, r.bottom];
-    const cx = [rect.left, rect.cx, rect.right];
-    const cy = [rect.top,  rect.cy, rect.bottom];
-
-    for(const a of cx){ for(const b of tx){ if(Math.abs(a-b)<=ALIGN){ sx = a-b; showV(a); } } }
-    for(const a of cy){ for(const b of ty){ if(Math.abs(a-b)<=ALIGN){ sy = a-b; showH(a); } } }
-  }
-
-  const adx = (nx + sx) - firstBase.x;
-  const ady = (ny + sy) - firstBase.y;
+  const adx = nx - firstBase.x;
+  const ady = ny - firstBase.y;
 
   drag.base.forEach(b => actions.updateNode(b.id, { x:b.x + adx, y:b.y + ady }));
   renderNodes();
 });
+
 
 window.addEventListener('mouseup', ()=>{
   if(!drag) return;
