@@ -270,6 +270,42 @@ import { actions, getState } from '../../state/store.js';
     // If your app doesn't auto-render, call renderNodes() after window.__gridEnhance.refresh().
   }
 
+// Allow external callers to place a node into a specific grid cell.
+  // Mirrors the logic used by the drop handler above but without requiring
+  // a DOM drag/drop event. Updates the internal grid mapping so that later
+  // refreshes preserve the new layout.
+  function moveNodeToCell(groupId, nodeId, cellIndex){
+    const gid = String(groupId);
+    const gst = gridState.get(gid);
+    if (!gst) return;
+    const idx = Number(cellIndex);
+    const cur = gst.ids.findIndex(x => x === nodeId);
+
+    if (cur === -1){
+      if (gst.ids[idx]) {
+        const tmp = gst.ids[idx];
+        gst.ids[idx] = nodeId;
+        for (const [otherId, otherSt] of gridState){
+          if (otherId === gid) continue;
+          const i = otherSt.ids.findIndex(x => x === nodeId);
+          if (i >= 0) otherSt.ids[i] = null;
+        }
+        const empty = gst.ids.indexOf(null);
+        if (empty >= 0) gst.ids[empty] = tmp;
+      } else {
+        gst.ids[idx] = nodeId;
+      }
+    } else if (cur !== idx) {
+      const tmp = gst.ids[idx];
+      gst.ids[idx] = gst.ids[cur];
+      gst.ids[cur] = tmp ?? null;
+    }
+
+    applyStatePositions(gid);
+  }
+
+
+
   // Lock / unlock API (Option B)
   function lockDrag(id){
     dragLocked = true;
@@ -286,7 +322,7 @@ import { actions, getState } from '../../state/store.js';
   }
 
   // Public hooks
-  window.__gridEnhance = { refresh, lockDrag, unlockDrag };
+  window.__gridEnhance = { refresh, lockDrag, unlockDrag, moveNodeToCell };
 
   // First run
   if(document.readyState === 'loading'){
