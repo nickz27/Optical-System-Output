@@ -269,8 +269,10 @@ import { actions, getState } from '../../state/store.js';
     // Rendering is assumed to be triggered by store subscribers.
     // If your app doesn't auto-render, call renderNodes() after window.__gridEnhance.refresh().
   }
+  // Allow external callers to place a node into a specific grid cell.
 
 // Allow external callers to place a node into a specific grid cell.
+
   // Mirrors the logic used by the drop handler above but without requiring
   // a DOM drag/drop event. Updates the internal grid mapping so that later
   // refreshes preserve the new layout.
@@ -304,8 +306,6 @@ import { actions, getState } from '../../state/store.js';
     applyStatePositions(gid);
   }
 
-
-
   // Lock / unlock API (Option B)
   function lockDrag(id){
     dragLocked = true;
@@ -314,11 +314,27 @@ import { actions, getState } from '../../state/store.js';
     for (const [gid, st] of gridState){
       frozen.set(gid, { rows: st.rows, cols: st.cols, ids: st.ids.slice() });
     }
+
+    // allow grid cells to receive drag events
+    const layer = document.querySelector(GROUP_LAYER_SELECTOR);
+    if (layer) layer.style.pointerEvents = 'auto';
+    if (layer) {
+      const boxes = layer.querySelectorAll(GROUP_BOX_SELECTOR);
+      boxes.forEach(b => b.style.pointerEvents = 'auto');
+    }
   }
   function unlockDrag(){
     dragLocked = false;
     draggingId = null;
     frozen = null;
+
+     // revert pointer events so group boxes don't block clicks when idle
+     const layer = document.querySelector(GROUP_LAYER_SELECTOR);
+     if (layer) layer.style.pointerEvents = 'none';
+     if (layer) {
+       const boxes = layer.querySelectorAll(GROUP_BOX_SELECTOR);
+       boxes.forEach(b => b.style.pointerEvents = 'none');
+     }
   }
 
   // Public hooks
