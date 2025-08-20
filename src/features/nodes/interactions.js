@@ -171,6 +171,7 @@ window.addEventListener('mouseup', ()=>{
 
           const idx = row * cols + col;
 
+
           // target cell center (client coords)
           const ccx = gr.left + col * cw + cw / 2;
           const ccy = gr.top  + row * ch + ch / 2;
@@ -210,7 +211,11 @@ window.addEventListener('mouseup', ()=>{
 
           if (GE().moveNodeToCell) {
             GE().moveNodeToCell(target, movedId, idx);
+
           }
+
+          }          
+
         }
       } catch (err) {
         // non-fatal; keep going
