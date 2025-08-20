@@ -2,7 +2,6 @@ import { renderTree } from './features/sidebar/tree.js';
 import { getState, actions, subscribe } from './state/store.js';
 import { renderNodes } from './features/nodes/render.js';
 import { renderBoard } from './features/board/board.js';
-import './features/groups/gridEnhance.js';
 import { bindNodeInteractions } from './features/nodes/interactions.js';
 import { bindToolbar } from './features/toolbar/toolbar.js';
 import { bindAddComponentModal, openAddComponentModal } from './features/modals/addComponentModal.js';
@@ -10,7 +9,6 @@ import { bind as bindLightSourceModal } from './features/modals/lightSourceModal
 import { bindNodeModal } from './features/modals/nodeEditModal.js';
 import { renderSystemPanel } from './features/sidebar/systemPanel.js';
 import { ensureGroupsLayer, renderGroupBoxes } from './features/groups/groups.js';
-
 
 window.App = window.App || {};
 window.App.Store = { getState, actions, subscribe };
@@ -29,9 +27,6 @@ function renderAll() {
   renderSystemPanel();
   try{ renderTree(getState()); }catch(e){}
   try{ renderGroupBoxes(getState()); }catch(e){}
-  if (window.__gridEnhance && typeof window.__gridEnhance.refresh === 'function') {
-    window.__gridEnhance.refresh();
-  }
 }
 
 function relayout() {
