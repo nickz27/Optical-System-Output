@@ -211,7 +211,11 @@ window.addEventListener('mouseup', ()=>{
 
           if (GE().moveNodeToCell) {
             GE().moveNodeToCell(target, movedId, idx);
+
+          }
+
           }          
+
         }
       } catch (err) {
         // non-fatal; keep going
