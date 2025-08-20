@@ -169,6 +169,8 @@ window.addEventListener('mouseup', ()=>{
           col = Math.max(0, Math.min(cols - 1, col));
           row = Math.max(0, Math.min(rows - 1, row));
 
+          const idx = row * cols + col;
+
           // target cell center (client coords)
           const ccx = gr.left + col * cw + cw / 2;
           const ccy = gr.top  + row * ch + ch / 2;
@@ -204,6 +206,10 @@ window.addEventListener('mouseup', ()=>{
             const swapX = Math.round((oldCx - br.left) - (CARD_W / 2));
             const swapY = Math.round((oldCy - br.top ) - (CARD_H / 2));
             actions.updateNode(occupant.id, { x: swapX, y: swapY });
+          }
+
+          if (GE().moveNodeToCell) {
+            GE().moveNodeToCell(target, movedId, idx);
           }
         }
       } catch (err) {
