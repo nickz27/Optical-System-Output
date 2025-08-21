@@ -198,7 +198,7 @@ import { actions, getState } from '../../state/store.js';
 
       // (B) reconcile ids (freeze exact layout if dragging)
       let st = gridState.get(g.id);
-      if(!st) st = { rows, cols, ids: new Array(total).fill(null), centers: new Array(total).fill(null), areas: new Array(total).fill(null) };
+     if(!st) st = { rows, cols, ids: new Array(total).fill(null), centers: new Array(total).fill(null), areas: new Array(total).fill(null) };
 
       let nextIds;
       if (dragLocked && frozenSt){

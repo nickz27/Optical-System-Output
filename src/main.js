@@ -26,13 +26,13 @@ function initialSeed() {
 function renderAll() {
   renderBoard();
   renderNodes();
+  const board = document.getElementById('board');
+  ensureGroupsLayer(board);
   renderSystemPanel();
   try{ renderTree(getState()); }catch(e){}
-  try{ renderGroupBoxes(getState()); }catch(e){}
-  if (window.__gridEnhance && typeof window.__gridEnhance.refresh === 'function') {
-    window.__gridEnhance.refresh();
+  if (window.__gridEnhance) { window.__gridEnhance.refresh(); }
   }
-}
+
 
 function relayout() {
   const board = document.getElementById('board');

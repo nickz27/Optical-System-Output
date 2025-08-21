@@ -1,5 +1,6 @@
 import { actions, getState } from '../../state/store.js';
 import { loadCatalog } from '../../core/catalog/catalog.js';
+import { renderNodes } from '../nodes/render.js';
 
 function el(id) { return document.getElementById(id); }
 
@@ -167,6 +168,11 @@ export function bindAddComponentModal() {
       y: 120,
       config
     });
+
+    try {
+      renderNodes();
+      window.__gridEnhance?.refresh?.();
+    } catch (e) { /* ignore */ }
 
     close();
   });
