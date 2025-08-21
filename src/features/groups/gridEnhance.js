@@ -271,8 +271,10 @@ import { actions, getState } from '../../state/store.js';
     // Rendering is assumed to be triggered by store subscribers.
     // If your app doesn't auto-render, call renderNodes() after window.__gridEnhance.refresh().
   }
+  // Allow external callers to place a node into a specific grid cell.
 
 // Allow external callers to place a node into a specific grid cell.
+
   // Mirrors the logic used by the drop handler above but without requiring
   // a DOM drag/drop event. Updates the internal grid mapping so that later
   // refreshes preserve the new layout.
@@ -314,6 +316,7 @@ import { actions, getState } from '../../state/store.js';
     for (const [gid, st] of gridState){
       frozen.set(gid, { rows: st.rows, cols: st.cols, ids: st.ids.slice() });
     }
+
     // allow grid cells to receive drag events
     const layer = document.querySelector(GROUP_LAYER_SELECTOR);
     if (layer) layer.style.pointerEvents = 'auto';
@@ -326,27 +329,14 @@ import { actions, getState } from '../../state/store.js';
     dragLocked = false;
     draggingId = null;
     frozen = null;
-   }
 
-  function highlightAt(x, y){
-    for (const [gid, st] of gridState){
-      const box = document.querySelector(`#group-${gid}, .group-box[data-group-id="${gid}"]`);
-      const ol = box && box.querySelector(':scope > .grid-overlay');
-      if (!ol || !st.areas) continue;
-      let over = -1;
-      for (let i=0; i<st.areas.length; i++){
-        const a = st.areas[i];
-        if (a && x >= a.x0 && x < a.x1 && y >= a.y0 && y < a.y1){ over = i; break; }
-      }
-      Array.from(ol.children).forEach(c=>{
-        const idx = Number(c.dataset.idx);
-        c.classList.toggle('over', idx === over);
-      });
-    }
-  }
-  function clearHighlight(){
-    document.querySelectorAll('.grid-overlay .grid-cell.over')
-      .forEach(c=>c.classList.remove('over'));
+     // revert pointer events so group boxes don't block clicks when idle
+     const layer = document.querySelector(GROUP_LAYER_SELECTOR);
+     if (layer) layer.style.pointerEvents = 'none';
+     if (layer) {
+       const boxes = layer.querySelectorAll(GROUP_BOX_SELECTOR);
+       boxes.forEach(b => b.style.pointerEvents = 'none');
+     }
   }
 
   // Public hooks
