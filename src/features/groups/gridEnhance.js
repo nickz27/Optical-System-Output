@@ -76,8 +76,9 @@ import { actions, getState } from '../../state/store.js';
         areas.push({ x0:left, y0:top, x1:left+cw, y1:top+ch });
       }
     }
-     return { centers, areas };
-  }
+        return { centers, areas };
+    }
+
 
   function ensureOverlay(box, rows, cols){
     let ol = box.querySelector(':scope > .grid-overlay');
@@ -218,7 +219,7 @@ import { actions, getState } from '../../state/store.js';
         }
       }
 
-      // (C) recompute centers/areas for this grid
+     // (C) recompute centers/areas for this grid
       const { centers, areas } = computeCells(boardEl, g.box, rows, cols);
 
       // (D) commit group grid state
@@ -271,9 +272,6 @@ import { actions, getState } from '../../state/store.js';
     // Rendering is assumed to be triggered by store subscribers.
     // If your app doesn't auto-render, call renderNodes() after window.__gridEnhance.refresh().
   }
-  // Allow external callers to place a node into a specific grid cell.
-
-// Allow external callers to place a node into a specific grid cell.
 
   // Mirrors the logic used by the drop handler above but without requiring
   // a DOM drag/drop event. Updates the internal grid mapping so that later
@@ -329,16 +327,29 @@ import { actions, getState } from '../../state/store.js';
     dragLocked = false;
     draggingId = null;
     frozen = null;
+ }
 
-     // revert pointer events so group boxes don't block clicks when idle
-     const layer = document.querySelector(GROUP_LAYER_SELECTOR);
-     if (layer) layer.style.pointerEvents = 'none';
-     if (layer) {
-       const boxes = layer.querySelectorAll(GROUP_BOX_SELECTOR);
-       boxes.forEach(b => b.style.pointerEvents = 'none');
-     }
+  function highlightAt(x, y){
+    for (const [gid, st] of gridState){
+      const box = document.querySelector(`#group-${gid}, .group-box[data-group-id="${gid}"]`);
+      const ol = box && box.querySelector(':scope > .grid-overlay');
+      if (!ol || !st.areas) continue;
+      let over = -1;
+      for (let i=0; i<st.areas.length; i++){
+        const a = st.areas[i];
+        if (a && x >= a.x0 && x < a.x1 && y >= a.y0 && y < a.y1){ over = i; break; }
+      }
+      Array.from(ol.children).forEach(c=>{
+        const idx = Number(c.dataset.idx);
+        c.classList.toggle('over', idx === over);
+      });
+    }
   }
 
+  function clearHighlight(){
+    document.querySelectorAll('.grid-overlay .grid-cell.over')
+      .forEach(c=>c.classList.remove('over'));
+  }
   // Public hooks
   window.__gridEnhance = { refresh, lockDrag, unlockDrag, moveNodeToCell, highlightAt, clearHighlight };
 
