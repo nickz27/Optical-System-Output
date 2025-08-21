@@ -120,6 +120,9 @@ window.addEventListener('mousemove', (e)=>{
 
   drag.base.forEach(b => actions.updateNode(b.id, { x:b.x + adx, y:b.y + ady }));
   renderNodes();
+  const cx = nx + CARD_W/2;
+  const cy = ny + CARD_H/2;
+  if (GE().highlightAt) GE().highlightAt(cx, cy);
 });
 
 
@@ -235,6 +238,7 @@ window.addEventListener('mouseup', ()=>{
   renderNodes();
 
   // 🔓 allow grid to reflow once after drop
+  if (GE().clearHighlight) GE().clearHighlight();
   if (GE().unlockDrag) GE().unlockDrag();
   if (GE().refresh) GE().refresh();
 

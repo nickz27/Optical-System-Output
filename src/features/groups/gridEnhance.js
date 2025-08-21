@@ -60,21 +60,23 @@ import { actions, getState } from '../../state/store.js';
     return map;
   }
 
-  // compute cell centers in BOARD coordinates
-  function computeCenters(boardEl, boxEl, rows, cols){
+  // compute cell centers & areas in BOARD coordinates
+  function computeCells(boardEl, boxEl, rows, cols){
     const brd = rect(boardEl);
     const box = rect(boxEl);
     const cw = box.width / cols;
     const ch = box.height / rows;
     const centers = [];
+    const areas = [];
     for(let r=0; r<rows; r++){
       for(let c=0; c<cols; c++){
-        const cx = (box.left + c*cw + cw/2) - brd.left; // board coords
-        const cy = (box.top  + r*ch + ch/2) - brd.top;
-        centers.push({ x: Math.round(cx - CARD_W/2), y: Math.round(cy - CARD_H/2) });
+        const left = (box.left + c*cw) - brd.left;
+        const top  = (box.top  + r*ch) - brd.top;
+        centers.push({ x: Math.round(left + cw/2 - CARD_W/2), y: Math.round(top + ch/2 - CARD_H/2) });
+        areas.push({ x0:left, y0:top, x1:left+cw, y1:top+ch });
       }
     }
-    return centers;
+     return { centers, areas };
   }
 
   function ensureOverlay(box, rows, cols){
@@ -195,7 +197,7 @@ import { actions, getState } from '../../state/store.js';
 
       // (B) reconcile ids (freeze exact layout if dragging)
       let st = gridState.get(g.id);
-      if(!st) st = { rows, cols, ids: new Array(total).fill(null), centers: new Array(total).fill(null) };
+      if(!st) st = { rows, cols, ids: new Array(total).fill(null), centers: new Array(total).fill(null), areas: new Array(total).fill(null) };
 
       let nextIds;
       if (dragLocked && frozenSt){
@@ -216,11 +218,11 @@ import { actions, getState } from '../../state/store.js';
         }
       }
 
-      // (C) recompute centers for this grid
-      const centers = computeCenters(boardEl, g.box, rows, cols);
+      // (C) recompute centers/areas for this grid
+      const { centers, areas } = computeCells(boardEl, g.box, rows, cols);
 
       // (D) commit group grid state
-      st.rows = rows; st.cols = cols; st.ids = nextIds; st.centers = centers;
+      st.rows = rows; st.cols = cols; st.ids = nextIds; st.centers = centers; st.areas = areas;
       gridState.set(g.id, st);
 
       // (E) draw overlay cells
@@ -324,17 +326,31 @@ import { actions, getState } from '../../state/store.js';
     dragLocked = false;
     draggingId = null;
     frozen = null;
-     // revert pointer events so group boxes don't block clicks when idle
-     const layer = document.querySelector(GROUP_LAYER_SELECTOR);
-     if (layer) layer.style.pointerEvents = 'none';
-     if (layer) {
-       const boxes = layer.querySelectorAll(GROUP_BOX_SELECTOR);
-       boxes.forEach(b => b.style.pointerEvents = 'none');
-     }
+   }
+
+  function highlightAt(x, y){
+    for (const [gid, st] of gridState){
+      const box = document.querySelector(`#group-${gid}, .group-box[data-group-id="${gid}"]`);
+      const ol = box && box.querySelector(':scope > .grid-overlay');
+      if (!ol || !st.areas) continue;
+      let over = -1;
+      for (let i=0; i<st.areas.length; i++){
+        const a = st.areas[i];
+        if (a && x >= a.x0 && x < a.x1 && y >= a.y0 && y < a.y1){ over = i; break; }
+      }
+      Array.from(ol.children).forEach(c=>{
+        const idx = Number(c.dataset.idx);
+        c.classList.toggle('over', idx === over);
+      });
+    }
+  }
+  function clearHighlight(){
+    document.querySelectorAll('.grid-overlay .grid-cell.over')
+      .forEach(c=>c.classList.remove('over'));
   }
 
   // Public hooks
-  window.__gridEnhance = { refresh, lockDrag, unlockDrag, moveNodeToCell };
+  window.__gridEnhance = { refresh, lockDrag, unlockDrag, moveNodeToCell, highlightAt, clearHighlight };
 
   // First run
   if(document.readyState === 'loading'){
