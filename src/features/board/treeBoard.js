@@ -1,5 +1,5 @@
 import { getState, actions } from '../../state/store.js';
-import { chainEffRange } from '../../core/calc/range.js';
+import { chainEffRange, nodeEffRange } from '../../core/calc/range.js';
 
 function byOrderOrLabel(a, b){
   const ao = (a.order ?? 0), bo = (b.order ?? 0);
@@ -78,6 +78,14 @@ function metricLineForComponent(n){
   } else {
     wrap.innerHTML = entries.map(([k,v]) => `<span class="kv"><span class="k">${k}:</span><span class="v">${v}</span></span>`).join('');
   }
+  // append right-aligned efficiency
+  try {
+    const eff = nodeEffRange(n);
+    const spacer = document.createElement('span'); spacer.className = 'spacer';
+    const effEl = document.createElement('span'); effEl.className = 'eff';
+    effEl.textContent = `Eff: ${eff.min.toFixed(3)} – ${eff.max.toFixed(3)}`;
+    wrap.appendChild(spacer); wrap.appendChild(effEl);
+  } catch (_) {}
   return wrap;
 }
 

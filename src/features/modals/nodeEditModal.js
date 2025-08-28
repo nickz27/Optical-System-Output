@@ -68,11 +68,23 @@ export function bindNodeModal(){
       const el=document.getElementById('nm-'+f.key);
       cfg[f.key] = (f.input==='number')? Number(el.value||0): el.value;
     });
-    const name = (document.getElementById('nm-name')?.value || '').trim();
+    let name = (document.getElementById('nm-name')?.value || '').trim();
     const notes = document.getElementById('nm-notes').value||'';
-    actions.updateNode(id,{ kind, config: { ...cfg, name, notes } });
+
+    // If name left blank, auto-generate: "<Kind Label> <#>"
+    if (!name){
+      const stNow = getState();
+      const node = stNow.nodes.find(n=>n.id===id);
+      const chainId = node?.chainId;
+      const base = (tables[kind]?.label || kind);
+      const count = (stNow.nodes||[]).filter(n => n.id!==id && n.chainId===chainId && n.kind===kind && !n.disabled).length;
+      name = `${base} ${count + 1}`;
+    }
+
+    actions.updateNode(id,{ kind, label: name, config: { ...cfg, name, notes } });
     close();
   });
+  document.getElementById('btn-nm-close')?.addEventListener('click', ()=> close());
   function open(nodeId){
     const tables=loadCatalog();
     const st=getState(); const n=st.nodes.find(x=>x.id===nodeId); if(!n) return;
@@ -80,7 +92,7 @@ export function bindNodeModal(){
     modal.classList.add('show'); center(modal);
     kindSel.innerHTML=''; getSystemsList(tables).forEach(k=>{ const o=document.createElement('option'); o.value=k.key; o.textContent=k.label; kindSel.appendChild(o); });
     kindSel.value=n.kind;
-    const nmName = document.getElementById('nm-name'); if(nmName) nmName.value = n.config?.name || n.label || '';
+    const nmName = document.getElementById('nm-name'); if(nmName) nmName.value = n.config?.name || '';
     document.getElementById('nm-notes').value = n.config?.notes || '';
     buildDynamic(document.getElementById('nm-dynamic'), tables, n.kind, n.config);
     kindSel.onchange = ()=> buildDynamic(document.getElementById('nm-dynamic'), tables, kindSel.value, {});

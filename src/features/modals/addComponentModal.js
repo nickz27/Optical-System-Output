@@ -156,14 +156,24 @@ export function bindAddComponentModal() {
         : input.value;
     });
 
-    const label = (el('ac-label')?.value || '').trim() || (def.label || kind);
+    // Determine name (blank = auto increment by kind)
+    const rawName = (el('ac-label')?.value || '').trim();
+    let name = rawName;
+    if (!name) {
+      const stNow = getState();
+      const base = (def.label || kind);
+      const count = (stNow.nodes || []).filter(n => n.chainId === chainId && n.kind === kind && !n.disabled).length;
+      name = `${base} ${count + 1}`;
+    }
+
     const notes = (el('ac-notes')?.value || '').trim();
     if (notes) config.notes = notes;
+    config.name = name;
 
     actions.addNode({
       chainId,
       kind,
-      label,
+      label: name,
       x: 120,
       y: 120,
       config

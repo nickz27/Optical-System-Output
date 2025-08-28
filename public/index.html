@@ -95,14 +95,16 @@
       <div class="group"><label>lm/LED</label><input id="ed-led-lm" type="number" min="0" step="1"></div>
       <div class="group"><label>Total lm (computed)</label><input id="ed-led-total" type="number" readonly></div>
     </div>
-    <div class="modal-actions"><button id="btn-ls-ok" class="primary" type="button">OK</button></div>
+    <div class="modal-actions">
+      <button id="btn-ls-ok" class="primary" type="button">OK</button>
+      <button id="btn-ls-close" class="btn" type="button">Cancel</button>
+    </div>
   </div>
 
   <div id="node-modal" class="modal">
     <div class="modal-header" id="node-drag">Edit Component</div>
     <div class="modal-body">
-      <div class="group"><label>Name</label><input id="ed-chain-label" type="text" placeholder="e.g., Light Pipe, Reflector, etc"></div>
-      <div class="group"><label>Name</label><input id="nm-name" type="text" placeholder="e.g., Component name"></div>
+      <div class="group"><label>Name</label><input id="nm-name" type="text" placeholder="(blank = auto, e.g., Light Pipe 1)"></div>
       <div class="group">
         <label>Optical System</label>
         <select id="nm-kind"></select>
@@ -112,6 +114,7 @@
     </div>
     <div class="modal-actions">
       <button id="btn-nm-ok" class="primary" type="button">OK</button>
+      <button id="btn-nm-close" class="btn" type="button">Cancel</button>
     </div>
   </div>
 
@@ -123,11 +126,19 @@
         <label>Component</label>
         <select id="ac-kind"></select>
       </div>
+      <div class="group">
+        <label>Name</label>
+        <input id="ac-label" type="text" placeholder="(blank = auto, e.g., Light Pipe 1)">
+      </div>
       <div id="ac-dynamic"></div>
+      <div class="group">
+        <label>Notes</label>
+        <textarea id="ac-notes" rows="2" placeholder="(optional)"></textarea>
+      </div>
     </div>
     <div class="modal-actions">
-      <button id="btn-ac-close" type="button">Cancel</button>
       <button id="btn-ac-ok" class="primary" type="button">Add</button>
+      <button id="btn-ac-close" class="btn" type="button">Cancel</button>
     </div>
   </div>
 
