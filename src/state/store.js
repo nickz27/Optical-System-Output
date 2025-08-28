@@ -5,7 +5,7 @@ const state = {
   nodes: [],
   selection: { ids: [] },
   viewport: { x: 0, y: 0, k: 1 },
-  ui: { targetLumens: 0, activeFunction: '' }
+  ui: { targetLumens: 0, activeFunction: '', boardMode: 'tree' }
 };
 
 const listeners = new Set();
@@ -51,7 +51,13 @@ export const actions = {
 
   addNode(node){
     const id = node.id || crypto.randomUUID();
-    state.nodes.push({ id, config:{}, ...node });
+    // default order for components within a chain (LightSource not ordered)
+    let order = node.order;
+    if (order == null && node.kind && node.kind !== 'LightSource' && node.chainId){
+      const comps = state.nodes.filter(n => n.chainId === node.chainId && n.kind !== 'LightSource');
+      order = comps.length; // append to end by default
+    }
+    state.nodes.push({ id, config:{}, order, ...node });
     maybeEmit();
     return id;
   },
@@ -78,6 +84,11 @@ export const actions = {
     const n = state.nodes.find(x=>x.id===nodeId);
     if (!n) return;
     n.chainId = newChainId;
+    // Reset order to end when moving into a different chain (tree can reorder later)
+    if (n.kind !== 'LightSource'){
+      const comps = state.nodes.filter(m => m.chainId === newChainId && m.kind !== 'LightSource' && m.id !== nodeId);
+      n.order = comps.length;
+    }
 
     const SPACING_X = 280, SPACING_Y = 140, START_X = 120, START_Y = 120;
     const siblings = state.nodes
@@ -92,6 +103,20 @@ export const actions = {
       n.x = START_X;
       n.y = START_Y + row * SPACING_Y;
     }
+    maybeEmit();
+  },
+
+  // Reorder a component within a chain to a specific index
+  reorderNodeInChain(nodeId, chainId, newIndex){
+    const comps = state.nodes
+      .filter(n => n.chainId === chainId && n.kind !== 'LightSource')
+      .sort((a,b) => (a.order??0) - (b.order??0));
+    const idx = comps.findIndex(n => n.id === nodeId);
+    if (idx === -1) return;
+    const [moved] = comps.splice(idx, 1);
+    const clamped = Math.max(0, Math.min(newIndex, comps.length));
+    comps.splice(clamped, 0, moved);
+    comps.forEach((n,i) => { const nn = state.nodes.find(x=>x.id===n.id); if (nn) nn.order = i; });
     maybeEmit();
   },
 

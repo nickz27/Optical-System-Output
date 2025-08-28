@@ -107,7 +107,8 @@ export function renderGroupBoxes(state){
 
     const title = document.createElement('div');
     title.className = 'title';
-    title.textContent = c.label || `Group ${idx + 1}`;
+    // Omit auto group numbering; prefer explicit label only
+    title.textContent = c.label || '';
 
     const eff = chainEffRange(state.nodes, c.id);
     const stats = document.createElement('div');
