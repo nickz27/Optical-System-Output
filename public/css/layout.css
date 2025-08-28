@@ -88,3 +88,6 @@ body {
 #topbar .left #btn-add-component{ background: rgba(0,176,255,0.12); border-color: var(--neon-cyan-dark); color: var(--text); }
 /* Final output computed chip darker like background */
 #final-range{ background: var(--panel); border-color: var(--border); color: var(--text); }
+#final-range.range-green{ color:#7ee787; border-color:#2a7c4f }
+#final-range.range-yellow{ color:#f0db88; border-color:#8a6b1f }
+#final-range.range-red{ color:#ffb3b3; border-color:#7a2a2a }

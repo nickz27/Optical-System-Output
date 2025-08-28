@@ -1,7 +1,7 @@
 import { getState, actions, subscribe } from '../../state/store.js';
 import { loadCatalog } from '../../core/catalog/catalog.js';
 import lampFunctions from '../../core/catalog/defaults/lampFunctions.js';
-import { chainFinalLumensRange } from '../../core/calc/chainRange.js';
+import { systemSummary } from '../../core/calc/range.js';
 
 function getLampFunctions(){
   try {
@@ -15,11 +15,8 @@ function renderFinalChip(){
   const st = getState();
   const chip = document.getElementById('final-range');
   if (!chip) return;
-  const tables = loadCatalog() || {};
-  const activeChain = st.selection.ids.length ? st.nodes.find(n=>n.id===st.selection.ids[0])?.chainId : st.chains[0]?.id;
-  const ch = st.chains.find(c=>c.id===activeChain);
-  if (!ch){ chip.textContent = '0–0 lm'; return; }
-  const rng = chainFinalLumensRange(st.nodes, ch);
+  const sum = systemSummary(st.nodes, st.chains);
+  const rng = sum.totalLumens || { min:0, max:0 };
   chip.textContent = `${rng.min.toFixed(1)}–${rng.max.toFixed(1)} lm`;
   chip.classList.remove('range-green','range-yellow','range-red');
   const t = st.ui.targetLumens || 0;
@@ -69,6 +66,9 @@ export function renderFunctionSettings(){
   }
   if (!target.dataset.boundT){
     target.addEventListener('input', ()=> actions.setUi({ targetLumens: Number(target.value)||0 }));
+    // prevent mouse wheel and arrow keys from changing the value (no increment functionality)
+    target.addEventListener('wheel', (e)=>{ e.preventDefault(); }, { passive:false });
+    target.addEventListener('keydown', (e)=>{ if (e.key==='ArrowUp' || e.key==='ArrowDown') e.preventDefault(); });
     target.dataset.boundT = '1';
   }
 
@@ -80,4 +80,3 @@ export function bindFunctionSettings(){
   renderFunctionSettings();
   subscribe(()=> renderFunctionSettings());
 }
-

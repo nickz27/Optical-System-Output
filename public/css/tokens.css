@@ -29,6 +29,10 @@ body{background:var(--bg);color:var(--text);font-family:Segoe UI, Roboto, Helvet
 .group{display:flex;flex-direction:column;gap:6px;margin:10px 0}
 label{font-size:12px;color:var(--muted)}
 input,select,textarea{background:var(--panel-2);border:1px solid var(--border);border-radius:0;color:var(--text);padding:8px}
+/* Remove number input spinners */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button{ -webkit-appearance: none; margin: 0; }
+input[type=number]{ -moz-appearance: textfield; }
 .range-chip{background:var(--chip);border:1px solid var(--border);border-radius:0;padding:6px 10px;display:inline-block}
 .range-green{color:#7ee787;border-color:#2a7c4f}
 .range-yellow{color:#f0db88;border-color:#8a6b1f}
