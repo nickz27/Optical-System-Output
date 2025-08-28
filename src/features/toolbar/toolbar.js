@@ -68,6 +68,8 @@ function onAddLight() {
     renderNodes();
     window.__gridEnhance?.refresh?.();
     requestAnimationFrame(() => { renderNodes(); });
+    // trigger relayout so group boxes render for the new chain
+    try { window.dispatchEvent(new Event('resize')); } catch (_) {}
     
   } catch (e) { /* no-op */ }
 }
