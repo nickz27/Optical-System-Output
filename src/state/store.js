@@ -3,6 +3,7 @@
 const state = {
   chains: [],
   nodes: [],
+  stashGroups: [], // groups in stash by drop order [{id,nodeIds}]
   selection: { ids: [] },
   viewport: { x: 0, y: 0, k: 1 },
   ui: { targetLumens: 0, activeFunction: '', boardMode: 'tree' }
@@ -29,6 +30,7 @@ function snapshot(){
   return JSON.parse(JSON.stringify({
     chains: state.chains,
     nodes: state.nodes,
+    stashGroups: state.stashGroups,
     selection: state.selection,
     viewport: state.viewport,
     ui: state.ui
@@ -37,6 +39,7 @@ function snapshot(){
 function applySnapshot(s){
   state.chains = JSON.parse(JSON.stringify(s.chains || []));
   state.nodes = JSON.parse(JSON.stringify(s.nodes || []));
+  state.stashGroups = JSON.parse(JSON.stringify(s.stashGroups || []));
   state.selection = JSON.parse(JSON.stringify(s.selection || { ids: [] }));
   state.viewport = JSON.parse(JSON.stringify(s.viewport || { x:0, y:0, k:1 }));
   state.ui = JSON.parse(JSON.stringify(s.ui || state.ui));
@@ -67,6 +70,7 @@ export const actions = {
     const keepUi = JSON.parse(JSON.stringify(state.ui || {}));
     state.chains = [];
     state.nodes = [];
+    state.stashGroups = [];
     state.selection = { ids: [] };
     state.viewport = { x:0, y:0, k:1 };
     state.ui = keepUi;
@@ -113,6 +117,11 @@ export const actions = {
     recordBeforeChange();
     const n = state.nodes.find(x=>x.id===id);
     if (n) n.disabled = !!disabled;
+    // If enabling, also remove from stash groups
+    if (n && !n.disabled){
+      state.stashGroups.forEach(g => { g.nodeIds = (g.nodeIds||[]).filter(x => x !== id); });
+      state.stashGroups = state.stashGroups.filter(g => (g.nodeIds||[]).length > 0);
+    }
     maybeEmit();
   },
 
@@ -125,6 +134,9 @@ export const actions = {
       // Remove the chain if its Light Source is gone
       state.chains = state.chains.filter(c => c.id !== node.chainId);
     }
+    // Also remove from stash groups
+    state.stashGroups.forEach(g => { g.nodeIds = (g.nodeIds||[]).filter(x => x !== id); });
+    state.stashGroups = state.stashGroups.filter(g => (g.nodeIds||[]).length > 0);
     maybeEmit();
   },
 
@@ -213,11 +225,25 @@ export const actions = {
     applySnapshot({
       chains: s.chains || [],
       nodes: s.nodes || [],
+      stashGroups: s.stashGroups || [],
       selection: s.selection || { ids: [] },
       viewport: s.viewport || { x:0, y:0, k:1 },
       ui: s.ui || state.ui
     });
     emit();
+  },
+
+  // Stash grouping helpers
+  addStashGroup(nodeIds){
+    recordBeforeChange();
+    const ids = Array.from(new Set(nodeIds||[]));
+    // Remove ids from any existing groups to avoid duplication
+    state.stashGroups.forEach(g => { g.nodeIds = (g.nodeIds||[]).filter(x => !ids.includes(x)); });
+    state.stashGroups = state.stashGroups.filter(g => (g.nodeIds||[]).length > 0);
+    const id = crypto.randomUUID();
+    state.stashGroups.push({ id, nodeIds: ids });
+    maybeEmit();
+    return id;
   }
 };
 

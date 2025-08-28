@@ -1,5 +1,13 @@
 import { actions, getState } from '../../state/store.js';
 
+function center(modal){
+  const r = modal.getBoundingClientRect();
+  const left = Math.max(8, (window.innerWidth - r.width) / 2);
+  const top  = Math.max(8, (window.innerHeight - r.height) / 2);
+  modal.style.left = left + 'px';
+  modal.style.top = top + 'px';
+}
+
 function el(id){ return document.getElementById(id); }
 
 let __currentChainId = null;
@@ -37,6 +45,8 @@ export function open(chainId, nodeId){
     modal.dataset.chainId = chainId;
     modal.classList.add('show');
     modal.style.zIndex = 10000;
+    // center on first open or if not positioned
+    if (!modal.style.left || !modal.style.top) center(modal);
   }
 }
 

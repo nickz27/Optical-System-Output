@@ -27,30 +27,35 @@ function renderStashChain(container, chainId, nodes){
 
   // Header uses the Light Source title if present (even if disabled)
   const ls = nodes.find(n => n.chainId===chainId && n.kind==='LightSource');
-  const hdr = document.createElement('div'); hdr.className = 'tree-chain-hdr';
-  const title = document.createElement('div'); title.className = 'tree-chain-title';
-  title.textContent = ls?.label || 'Light Source';
-  hdr.appendChild(title);
-  // LS selection + dragging from stash
-  if (ls){
+  if (ls) {
+    const hdr = document.createElement('div'); hdr.className = 'tree-chain-hdr';
+    const title = document.createElement('div'); title.className = 'tree-chain-title';
+    title.textContent = ls.label || 'Light Source';
+    hdr.appendChild(title);
+    // LS selection + dragging + editing from stash
     hdr.dataset.nodeId = ls.id;
     hdr.addEventListener('click', ()=> actions.selectSingle(ls.id));
+    hdr.addEventListener('dblclick', ()=> window.App?.Events?.openLsModal?.(ls.chainId, ls.id));
     hdr.draggable = true;
     hdr.addEventListener('dragstart', (e)=>{
       e.dataTransfer?.setData('text/node-id', ls.id);
       e.dataTransfer?.setData('text/plain', ls.id);
       e.dataTransfer.effectAllowed = 'move';
     });
+    group.appendChild(hdr);
   }
-  group.appendChild(hdr);
 
-  const ul = document.createElement('ul'); ul.className = 'tree-list';
+  const ul = document.createElement('ul');
+  ul.className = 'tree-list';
   const comps = nodes.filter(n => n.chainId===chainId && n.kind!=='LightSource');
+  // If this stash group has no Light Source header, hide branch graphics
+  if (!ls) ul.classList.add('no-branches');
   comps.forEach(n => {
     const li = document.createElement('li'); li.className = 'tree-item'; li.dataset.nodeId = n.id;
     const t = document.createElement('div'); t.className = 'tree-item-title'; t.textContent = (n.config?.name || n.label || n.kind);
     li.appendChild(t);
     li.addEventListener('click', ()=> actions.selectSingle(n.id));
+    li.addEventListener('dblclick', ()=> window.App?.Events?.openNodeModal?.(n.id));
     li.draggable = true;
     li.addEventListener('dragstart', (e)=>{
       e.dataTransfer?.setData('text/node-id', n.id);
@@ -67,10 +72,14 @@ export function renderStash(){
   const el = document.getElementById('stash-list'); if (!el) return;
   const st = getState();
   el.innerHTML = '';
-  // Stashed nodes are disabled; group by chainId
-  const disabledNodes = (st.nodes||[]).filter(n => n.disabled);
-  const chainIds = Array.from(new Set(disabledNodes.map(n=>n.chainId))).filter(Boolean);
-  chainIds.forEach(cid => renderStashChain(el, cid, disabledNodes));
+  // Render per stash group order
+  (st.stashGroups || []).forEach(g => {
+    const nodes = (g.nodeIds||[]).map(id => (st.nodes||[]).find(n=>n.id===id)).filter(Boolean).filter(n=>n.disabled);
+    if (!nodes.length) return;
+    const hasLs = nodes.some(n => n.kind==='LightSource');
+    const chainId = hasLs ? (nodes.find(n=>n.kind==='LightSource')?.chainId || null) : (nodes[0]?.chainId || null);
+    renderStashChain(el, chainId, nodes);
+  });
 
   // reflect current selection
   const sel = new Set(st.selection?.ids || []);
@@ -93,11 +102,24 @@ export function renderStash(){
       if (!id) return;
       const st2 = getState();
       const n = st2.nodes.find(x=>x.id===id); if (!n) return;
+      // Remove the node (and its chain, if LS) from any existing stash group to avoid duplicates
+      function purge(ids){
+        (st2.stashGroups||[]).forEach(g => { g.nodeIds = (g.nodeIds||[]).filter(x => !ids.includes(x)); });
+        st2.stashGroups = (st2.stashGroups||[]).filter(g => (g.nodeIds||[]).length > 0);
+      }
       if (n.kind === 'LightSource'){
-        // stash LS and all its components
+        // new stash group: LS + only currently on-board components (not already stashed)
+        const chainOnBoard = st2.nodes.filter(m=>m.chainId===n.chainId && m.kind!=='LightSource' && !m.disabled);
+        const ids = [n.id].concat(chainOnBoard.map(m=>m.id));
+        purge(ids);
+        actions.addStashGroup(ids);
         actions.setNodeDisabled(n.id, true);
-        st2.nodes.filter(m=>m.chainId===n.chainId && m.id!==n.id).forEach(m=> actions.setNodeDisabled(m.id, true));
+        // disable only the components that were on-board for this drop
+        chainOnBoard.forEach(m => actions.setNodeDisabled(m.id, true));
       } else {
+        // new stash group: just this component
+        purge([n.id]);
+        actions.addStashGroup([n.id]);
         actions.setNodeDisabled(n.id, true);
       }
     }, { passive: false });

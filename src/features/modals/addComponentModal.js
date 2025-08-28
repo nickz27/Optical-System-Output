@@ -83,6 +83,16 @@ export function openAddComponentModal(chainId) {
   if (!modal) return;
   modal.classList.add('show');
   modal.style.zIndex = 10000;
+  // center on first open or if not positioned
+  try{
+    const r = modal.getBoundingClientRect();
+    if (!modal.style.left || !modal.style.top || (r.left===0 && r.top===0)){
+      const left = Math.max(8, (window.innerWidth - r.width) / 2);
+      const top  = Math.max(8, (window.innerHeight - r.height) / 2);
+      modal.style.left = left + 'px';
+      modal.style.top = top + 'px';
+    }
+  }catch(_){ }
 }
 
 /* Close helper */

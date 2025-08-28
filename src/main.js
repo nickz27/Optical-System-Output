@@ -54,6 +54,27 @@ function mount(){
 
   // Delete key handling with async LS confirmation (Yes/No/Cancel)
   document.addEventListener('keydown', async (e) => {
+    // Esc: close any open modal or clear selection
+    if (e.key === 'Escape'){
+      const closeIfShown = (id, closer)=>{
+        const m = document.getElementById(id);
+        if (m && m.classList.contains('show')){ closer?.(); return true; }
+        return false;
+      };
+      if (
+        closeIfShown('confirm-ls-del', ()=>{ document.getElementById('btn-cls-cancel')?.click(); }) ||
+        closeIfShown('ls-modal', ()=>{ window.App?.Events?.closeLsModal?.(); }) ||
+        closeIfShown('add-comp-modal', ()=>{ const el=document.getElementById('add-comp-modal'); el?.classList.remove('show'); }) ||
+        closeIfShown('node-modal', ()=>{ window.App?.Events?.closeNodeModal?.(); })
+      ){
+        e.preventDefault();
+        return;
+      }
+      // no modals open: clear selection
+      const st0 = getState();
+      if (st0.selection?.ids?.length){ actions.selectSingle(null); e.preventDefault(); }
+      return;
+    }
     if (e.key !== 'Delete') return;
     const st = getState();
     const ids = st.selection?.ids || [];

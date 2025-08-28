@@ -30,6 +30,15 @@
   background: var(--panel-2); border:1px solid var(--border); border-radius:8px; }
 .tree-list::before{ content:''; position:absolute; left:6px; top:0; bottom:0; border-left:2px solid var(--border); }
 
+/* Sleeker connection between header and list */
+.tree-chain .tree-list{ margin-top:-6px; padding-top:10px; }
+.tree-chain .tree-list::before{ top:8px; opacity:.7; }
+.tree-item::before{ opacity:.7; }
+
+/* Hide branches for stash groups without a Light Source header */
+.tree-list.no-branches::before{ display:none; }
+.tree-list.no-branches > .tree-item::before{ display:none; }
+
 .tree-item{
   position:relative;
   background: transparent;
@@ -52,3 +61,8 @@
   left: -12px; right: 0; top: -1px;
   border-top: 2px solid var(--blue);
 }
+
+/* Stash tweaks: compact text and rows */
+#stash-list .tree-item{ padding: 6px 8px 6px 12px; }
+#stash-list .tree-item-title{ font-size: 12px; margin-bottom: 1px; }
+#stash-list .tree-chain-hdr .tree-chain-title{ font-size: 13px; }

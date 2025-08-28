@@ -19,9 +19,16 @@ export function renderBoard(){
       const stNow = getState();
       const n = (stNow.nodes||[]).find(x=>x.id===id);
       if (n && n.kind === 'LightSource'){
+        // Unstash only the LS and nodes that were stashed together with it in the same stash group
+        const group = (stNow.stashGroups||[]).find(g => (g.nodeIds||[]).includes(n.id));
         if (n.disabled) actions.setNodeDisabled(n.id, false);
-        (stNow.nodes||[]).filter(m=>m.chainId===n.chainId && m.id!==n.id && m.disabled)
-          .forEach(m=> actions.setNodeDisabled(m.id, false));
+        if (group && Array.isArray(group.nodeIds)){
+          group.nodeIds
+            .filter(x => x !== n.id)
+            .map(x => (stNow.nodes||[]).find(nn => nn.id === x))
+            .filter(nn => nn && nn.disabled)
+            .forEach(nn => actions.setNodeDisabled(nn.id, false));
+        }
       }
     });
     root.dataset.boundDrop = '1';
