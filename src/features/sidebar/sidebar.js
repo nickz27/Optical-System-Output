@@ -1,19 +1,57 @@
 import { actions, getState } from '../../state/store.js';
 import { loadCatalog, getSystemsList, getFactorsFor, getOptionsFor } from '../../core/catalog/catalog.js';
+import lampFunctions from '../../core/catalog/defaults/lampFunctions.js';
 import { chainFinalLumensRange } from '../../core/calc/chainRange.js';
 
 export function renderSidebar(){
   const st=getState(); const tables=loadCatalog();
+  const fnList = Array.isArray(tables?.lampFunctions) ? tables.lampFunctions : (Array.isArray(lampFunctions) ? lampFunctions : []);
+
   const sel=document.getElementById('sel-function');
-  if(sel && !sel.dataset.bound){
-    sel.dataset.bound='1';
-    tables.lampFunctions.forEach(i=>{ const o=document.createElement('option'); o.value=i.id; o.textContent=i.label; sel.appendChild(o); });
-    sel.value = st.ui.activeFunction;
-    sel.addEventListener('change', ()=> actions.setUi({activeFunction: sel.value}));
+  if (sel) {
+    // Always rebuild options from the current catalog/fallback
+    const prev = sel.value;
+    sel.innerHTML = '';
+    fnList.forEach(i=>{ const o=document.createElement('option'); o.value=i.id; o.textContent = i.label || i.id; sel.appendChild(o); });
+
+    // Choose selection: keep previous if still valid, else state, else first
+    let next = prev && fnList.some(x=>x.id===prev) ? prev : (st.ui.activeFunction || fnList[0]?.id || '');
+    if (!next && fnList.length) next = fnList[0].id;
+    sel.value = next;
+    // ensure state reflects selection and target
+    const defInit = fnList.find(x=>x.id===next);
+    const reqInit = defInit?.requiredLumens ?? (st.ui.targetLumens||0);
+    if (st.ui.activeFunction !== next || !st.ui.targetLumens) {
+      actions.setUi({ activeFunction: next, targetLumens: reqInit });
+    }
+    const tgt0=document.getElementById('inp-target-lm'); if(tgt0 && (!tgt0.value || Number(tgt0.value)===0)) tgt0.value = String(reqInit);
+    // Bind change handler once
+    if (!sel.dataset.boundChange){
+      sel.addEventListener('change', ()=>{
+        const id = sel.value;
+        const def = fnList.find(x=>x.id===id);
+        const req = def?.requiredLumens ?? 0;
+        actions.setUi({ activeFunction: id, targetLumens: req });
+        const tgt=document.getElementById('inp-target-lm'); if(tgt) tgt.value = String(req);
+      });
+      sel.dataset.boundChange = '1';
+    }
   }
+
   const target=document.getElementById('inp-target-lm');
-  if(target && !target.dataset.bound){ target.dataset.bound='1'; target.addEventListener('input', ()=> actions.setUi({targetLumens: Number(target.value)||0})); }
-  if(target) target.value = String(st.ui.targetLumens||0);
+  if(target && !target.dataset.bound){
+    target.dataset.bound='1';
+    target.addEventListener('input', ()=> actions.setUi({targetLumens: Number(target.value)||0}));
+  }
+  // if target not set, default from current function
+  if(target){
+    let val = st.ui.targetLumens || 0;
+    if (!val && st.ui.activeFunction){
+      const def = fnList.find(x=>x.id===st.ui.activeFunction);
+      if (def && def.requiredLumens!=null) val = Number(def.requiredLumens)||0;
+    }
+    target.value = String(val);
+  }
 
   const activeChain = st.selection.ids.length ? st.nodes.find(n=>n.id===st.selection.ids[0])?.chainId : st.chains[0]?.id;
   const ch = st.chains.find(c=>c.id===activeChain);

@@ -11,6 +11,7 @@ import { bindAddComponentModal, openAddComponentModal } from './features/modals/
 import { bind as bindLightSourceModal } from './features/modals/lightSourceModal.js';
 import { bindNodeModal } from './features/modals/nodeEditModal.js';
 import { renderSystemPanel } from './features/sidebar/systemPanel.js';
+import { renderFunctionSettings } from './features/sidebar/functionSettings.js';
 import { ensureGroupsLayer, renderGroupBoxes } from './features/groups/groups.js';
 
 
@@ -23,6 +24,8 @@ function renderAll() {
   const board = document.getElementById('board');
   ensureGroupsLayer(board);
   renderSystemPanel();
+  // Ensure Function Settings is rendered/bound
+  try { renderFunctionSettings(); } catch (e) {}
   try{ renderStash(); }catch(e){}
   if (window.__gridEnhance) { window.__gridEnhance.refresh(); }
   }
