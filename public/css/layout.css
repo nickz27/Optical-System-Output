@@ -80,9 +80,11 @@ body {
 #stash-section .sidebar-card-body{ flex:1 1 auto; display:flex; padding:0; }
 #stash-list{ flex:1 1 auto; background: var(--panel-2); }
 
-/* Square buttons in topbar */
-#topbar .btn{ border-radius:0 }
+/* Square buttons in topbar and equal size */
+#topbar .btn{ border-radius:0; padding:6px 10px; height:32px; line-height:18px }
 
 #groups-layer { pointer-events: none; }
 #topbar .left #btn-add-light-source{ background: rgba(0,231,255,0.12); border-color: var(--neon-cyan); color: var(--text); }
-#topbar .left #btn-add-component{ background: rgba(0,231,255,0.12); border-color: var(--neon-cyan); color: var(--text); }
+#topbar .left #btn-add-component{ background: rgba(0,176,255,0.12); border-color: var(--neon-cyan-dark); color: var(--text); }
+/* Final output computed chip darker like background */
+#final-range{ background: var(--panel); border-color: var(--border); color: var(--text); }

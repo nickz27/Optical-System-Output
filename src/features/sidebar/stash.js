@@ -92,8 +92,8 @@ export function renderStash(){
   // DnD target: dropping here stashes the node (and whole chain if LS)
   const section = document.getElementById('stash-section') || el;
   if (!section.dataset.boundDrop){
-    const onOver = (e)=>{ e.preventDefault(); };
-    const onLeave = ()=>{};
+    const onOver = (e)=>{ e.preventDefault(); el.classList.add('drop-over'); };
+    const onLeave = ()=>{ el.classList.remove('drop-over'); };
     section.addEventListener('dragover', onOver);
     section.addEventListener('dragleave', onLeave);
     section.addEventListener('drop', (e)=>{

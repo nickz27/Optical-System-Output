@@ -13,6 +13,7 @@
   --chip:#2b2b2b;
   /* Neon accents for indicators */
   --neon-cyan:#00e7ff;
+  --neon-cyan-dark:#00b0ff;
   --neon-lime:#7dff7a;
   --neon-amber:#ffd166;
   /* Stash surface */
@@ -27,7 +28,7 @@ body{background:var(--bg);color:var(--text);font-family:Segoe UI, Roboto, Helvet
 .section{padding:12px 16px;border:1px solid var(--border); background: var(--panel); border-radius:0}
 .group{display:flex;flex-direction:column;gap:6px;margin:10px 0}
 label{font-size:12px;color:var(--muted)}
-input,select,textarea{background:var(--panel);border:1px solid var(--border);border-radius:0;color:var(--text);padding:8px}
+input,select,textarea{background:var(--panel-2);border:1px solid var(--border);border-radius:0;color:var(--text);padding:8px}
 .range-chip{background:var(--chip);border:1px solid var(--border);border-radius:0;padding:6px 10px;display:inline-block}
 .range-green{color:#7ee787;border-color:#2a7c4f}
 .range-yellow{color:#f0db88;border-color:#8a6b1f}

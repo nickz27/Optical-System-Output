@@ -61,8 +61,8 @@ function renderChainHeader(c, nodes){
   // allow dropping components onto header to move to chain
   hdr.dataset.chainId = c.id;
   if (ls) hdr.dataset.nodeId = ls.id;
-  hdr.addEventListener('dragover', (e)=>{ e.preventDefault(); hdr.style.background = '#eef8ff'; });
-  hdr.addEventListener('dragleave', ()=>{ hdr.style.background = '#fafafa'; });
+  hdr.addEventListener('dragover', (e)=>{ e.preventDefault(); hdr.style.background = 'rgba(0,122,204,0.08)'; });
+  hdr.addEventListener('dragleave', ()=>{ hdr.style.background = ''; });
   hdr.addEventListener('drop', (e)=>{
     e.preventDefault(); hdr.style.background = '#fafafa';
     const nodeId = e.dataTransfer?.getData('text/node-id');
