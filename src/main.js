@@ -15,14 +15,6 @@ import { ensureGroupsLayer, renderGroupBoxes } from './features/groups/groups.js
 window.App = window.App || {};
 window.App.Store = { getState, actions, subscribe };
 
-function initialSeed() {
-  const st = getState();
-  if (!st.chains.length) {
-    const id = actions.addChain();
-    actions.addNode({ chainId:id, kind:'LightSource', label:'Light Source', x:120, y:120 });
-  }
-}
-
 function renderAll() {
   renderBoard();
   renderNodes();
@@ -55,7 +47,36 @@ function mount(){
   });
   bindLightSourceModal();
   bindNodeModal();
-  initialSeed();
+  // Delete key handling with Light Source prompt
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Delete') return;
+    const st = getState();
+    const ids = st.selection?.ids || [];
+    if (!ids.length) return;
+    e.preventDefault();
+    actions.beginBatch && actions.beginBatch();
+    try {
+      ids.forEach(id => {
+        const n = st.nodes.find(x => x.id === id);
+        if (!n) return;
+        if (n.kind === 'LightSource') {
+          const comps = st.nodes.filter(m => m.chainId === n.chainId && m.kind !== 'LightSource');
+          const keep = window.confirm('Do you want to keep components stashed?');
+          if (keep) {
+            comps.forEach(m => actions.setNodeDisabled(m.id, true));
+          } else {
+            comps.forEach(m => actions.removeNode(m.id));
+          }
+          actions.removeNode(n.id);
+        } else {
+          actions.removeNode(n.id);
+        }
+      });
+    } finally {
+      actions.endBatch && actions.endBatch();
+    }
+  });
+  // No default content; board may start empty
   renderAll();
   relayout();
   subscribe(renderAll);

@@ -136,8 +136,11 @@ export function renderTreeBoard(state){
 
   layer.innerHTML = '';
 
-  // Render each chain as a group with its LightSource (if any) and components under it
+  // Render only chains that still have a Light Source present
   (st.chains || []).forEach(c => {
+    const hasLs = (st.nodes||[]).some(n => n.chainId===c.id && n.kind==='LightSource' && !n.disabled);
+    if (!hasLs) return; // hide chains without a Light Source
+
     const group = document.createElement('div');
     group.className = 'tree-chain';
     group.dataset.chainId = c.id;

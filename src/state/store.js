@@ -118,8 +118,13 @@ export const actions = {
 
   removeNode(id){
     recordBeforeChange();
+    const node = state.nodes.find(n => n.id === id);
     state.nodes = state.nodes.filter(n => n.id !== id);
     if (state.selection.ids.includes(id)) state.selection.ids = [];
+    if (node && node.kind === 'LightSource') {
+      // Remove the chain if its Light Source is gone
+      state.chains = state.chains.filter(c => c.id !== node.chainId);
+    }
     maybeEmit();
   },
 
