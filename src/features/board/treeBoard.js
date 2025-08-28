@@ -47,6 +47,16 @@ function renderChainHeader(c, nodes){
   hdr.appendChild(title);
   hdr.appendChild(metrics);
 
+  // Make header draggable (to allow dragging LS to stash)
+  if (ls) {
+    hdr.draggable = true;
+    hdr.addEventListener('dragstart', (e)=>{
+      e.dataTransfer?.setData('text/node-id', ls.id);
+      e.dataTransfer?.setData('text/plain', ls.id);
+      e.dataTransfer.effectAllowed = 'move';
+    });
+  }
+
   // allow dropping components onto header to move to chain
   hdr.dataset.chainId = c.id;
   if (ls) hdr.dataset.nodeId = ls.id;
@@ -210,13 +220,14 @@ export function renderTreeBoard(state){
         actions.moveNodeToChain(nodeId, c.id);
       }
       actions.reorderNodeInChain(nodeId, c.id, idx);
+      if (n.disabled) actions.setNodeDisabled(nodeId, false);
       clearDropIndicator(ul);
     });
 
     // Header can accept drops at index 0 for quick move-to-top
     hdr.addEventListener('dragover', (e)=>{ e.preventDefault(); showDropIndicator(ul, 0); ul.dataset.dropIndex = '0'; });
     hdr.addEventListener('dragleave', ()=>{ clearDropIndicator(ul); });
-    hdr.addEventListener('drop', (e)=>{ e.preventDefault(); const nodeId = e.dataTransfer?.getData('text/node-id'); if (!nodeId) return; if ((getState().nodes.find(x=>x.id===nodeId)?.chainId) !== c.id) actions.moveNodeToChain(nodeId, c.id); actions.reorderNodeInChain(nodeId, c.id, 0); clearDropIndicator(ul); });
+    hdr.addEventListener('drop', (e)=>{ e.preventDefault(); const nodeId = e.dataTransfer?.getData('text/node-id'); if (!nodeId) return; const stD = getState(); const nd = stD.nodes.find(x=>x.id===nodeId); if (!nd) return; if (nd.chainId !== c.id) actions.moveNodeToChain(nodeId, c.id); actions.reorderNodeInChain(nodeId, c.id, 0); if (nd.disabled) actions.setNodeDisabled(nodeId, false); clearDropIndicator(ul); });
 
     group.appendChild(ul);
     layer.appendChild(group);

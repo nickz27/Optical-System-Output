@@ -35,3 +35,6 @@
   background: rgba(80,160,220,.15);
   border-color: rgba(80,160,220,.6);
 }
+#stash-section{ display:flex; flex-direction:column; min-height:0; }
+#stash-list{ flex:1 1 auto; min-height:180px; overflow:auto; padding:8px; border:1px solid rgba(255,255,255,0.15); border-radius:10px; background:rgba(255,255,255,0.03); }
+#stash-list.drop-over{ outline:2px solid var(--blue); outline-offset:2px; }

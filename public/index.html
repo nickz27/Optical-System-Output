@@ -41,6 +41,7 @@
     </div>
 
     <aside id="sidebar">
+      <div id="system-card" class="section" aria-live="polite"></div>
       <div class="section">
         <div class="group">
           <label>Function</label>
@@ -56,29 +57,10 @@
         </div>
       </div>
 
-      <div class="section">
-        <!-- <h3>Add component</h3>
-        <div class="group">
-          <label>Optical System</label>
-          <select id="sel-kind"></select>
-        </div>
-        <div class="group">
-          <label>Label</label>
-          <input id="inp-label" type="text" placeholder="(optional)">
-        </div>
-
-        <div id="add-dynamic"></div>
-
-        <div class="group">
-          <label>Notes</label>
-          <textarea id="inp-notes" rows="2" placeholder="(optional)"></textarea>
-        </div>
-        <button id="btn-add" class="primary">Add</button> -->
-    <!-- System Tree -->
-       <div id="sidebar-tree" class="tree"></div>
-
+      <div id="stash-section" class="section">
+        <h3 style="margin:0 0 8px 0; font-weight:600; opacity:.9">Stash</h3>
+        <div id="stash-list"></div>
       </div>
-      <div id="system-card" class="section" aria-live="polite"></div>
     </aside>
   </div>
 
@@ -135,6 +117,21 @@
     <div class="modal-actions">
       <button id="btn-ac-ok" class="primary" type="button">Add</button>
       <button id="btn-ac-close" class="btn" type="button">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Confirm delete Light Source (3 buttons) -->
+  <div id="confirm-ls-del" class="modal">
+    <div class="modal-header" id="cls-drag">Delete Light Source</div>
+    <div class="modal-body">
+      <p>Do you want to keep the chain's components stashed?</p>
+      <p>Select Yes to stash components, No to delete the entire chain, or Cancel to abort.</p>
+    </div>
+    <div class="modal-actions">
+      <button id="btn-cls-yes" class="btn" type="button">Yes (stash)</button>
+      <button id="btn-cls-stash-ls" class="btn" type="button">Stash Light Source only</button>
+      <button id="btn-cls-no" class="btn btn-danger" type="button">No (delete)</button>
+      <button id="btn-cls-cancel" class="btn" type="button">Cancel</button>
     </div>
   </div>
 

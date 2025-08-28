@@ -1,4 +1,6 @@
-import { renderTree } from './features/sidebar/tree.js';
+// Sidebar: stash instead of tree
+import { renderStash, bindStash } from './features/sidebar/stash.js';
+import { bindConfirmLsDelete, openConfirmLsDelete } from './features/modals/confirmLsDelete.js';
 import { getState, actions, subscribe } from './state/store.js';
 import { renderNodes } from './features/nodes/render.js';
 import { renderBoard } from './features/board/board.js';
@@ -21,7 +23,7 @@ function renderAll() {
   const board = document.getElementById('board');
   ensureGroupsLayer(board);
   renderSystemPanel();
-  try{ renderTree(getState()); }catch(e){}
+  try{ renderStash(); }catch(e){}
   if (window.__gridEnhance) { window.__gridEnhance.refresh(); }
   }
 
@@ -47,34 +49,44 @@ function mount(){
   });
   bindLightSourceModal();
   bindNodeModal();
-  // Delete key handling with Light Source prompt
-  document.addEventListener('keydown', (e) => {
+  bindStash();
+  bindConfirmLsDelete();
+
+  // Delete key handling with async LS confirmation (Yes/No/Cancel)
+  document.addEventListener('keydown', async (e) => {
     if (e.key !== 'Delete') return;
     const st = getState();
     const ids = st.selection?.ids || [];
     if (!ids.length) return;
     e.preventDefault();
-    actions.beginBatch && actions.beginBatch();
-    try {
-      ids.forEach(id => {
-        const n = st.nodes.find(x => x.id === id);
-        if (!n) return;
-        if (n.kind === 'LightSource') {
-          const comps = st.nodes.filter(m => m.chainId === n.chainId && m.kind !== 'LightSource');
-          const keep = window.confirm('Do you want to keep components stashed?');
-          if (keep) {
-            comps.forEach(m => actions.setNodeDisabled(m.id, true));
-          } else {
-            comps.forEach(m => actions.removeNode(m.id));
-          }
-          actions.removeNode(n.id);
-        } else {
-          actions.removeNode(n.id);
-        }
-      });
-    } finally {
-      actions.endBatch && actions.endBatch();
+
+    const id = ids[0];
+    const n = st.nodes.find(x=>x.id===id);
+
+    // Components delete immediately; LS asks via modal
+    if (!n) return;
+    if (n.kind !== 'LightSource') {
+      actions.removeNode(n.id);
+      return;
     }
+
+    const comps = st.nodes.filter(m => m.chainId === n.chainId && m.kind !== 'LightSource');
+    const ans = await openConfirmLsDelete(); // 'yes' | 'no' | 'stash-ls' | 'cancel'
+    if (ans === 'cancel') return; // abort
+    actions.beginBatch && actions.beginBatch();
+    try{
+      if (ans === 'yes'){
+        comps.forEach(m => actions.setNodeDisabled(m.id, true));
+        actions.removeNode(n.id);
+      } else if (ans === 'no'){
+        comps.forEach(m => actions.removeNode(m.id));
+        actions.removeNode(n.id);
+      } else if (ans === 'stash-ls'){
+        // Stash only the LS; delete components
+        actions.setNodeDisabled(n.id, true);
+        comps.forEach(m => actions.removeNode(m.id));
+      }
+    } finally { actions.endBatch && actions.endBatch(); }
   });
   // No default content; board may start empty
   renderAll();

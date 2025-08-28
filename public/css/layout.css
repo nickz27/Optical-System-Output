@@ -79,7 +79,9 @@ body {
   width: 360px;
   border-left: 1px solid var(--border);
   background: linear-gradient(180deg, var(--panel), var(--panel-2));
-  overflow: auto;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 #groups-layer { pointer-events: none; }
