@@ -2,7 +2,8 @@
 // Targets the styled Add Light Source button (#btn-add-light-source).
 
 import { actions, getState } from '../../state/store.js';
-import { renderNodes } from '../nodes/render.js';          // ⬅️ add this
+import { renderNodes } from '../nodes/render.js';
+// project open/save use state snapshots, not catalog tables
 
 let __toolbarBound = false;
 
@@ -84,6 +85,48 @@ export function bindToolbar() {
     btn.addEventListener('click', onAddLight);
     btn.dataset.boundAddLight = '1';
   }
+
+  // Open/Save Catalog
+  const btnOpen = document.getElementById('btn-import-catalog');
+  if (btnOpen && !btnOpen.dataset.boundOpen) {
+    btnOpen.addEventListener('click', () => {
+      const inp = document.createElement('input');
+      inp.type = 'file'; inp.accept = 'application/json,.json';
+      inp.onchange = () => {
+        const file = inp.files && inp.files[0]; if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const obj = JSON.parse(String(reader.result || '{}'));
+            actions.loadProject(obj);
+          } catch (err) { console.warn('Invalid catalog JSON', err); }
+        };
+        reader.readAsText(file);
+      };
+      inp.click();
+    });
+    btnOpen.dataset.boundOpen = '1';
+  }
+
+  const btnSave = document.getElementById('btn-export-catalog');
+  if (btnSave && !btnSave.dataset.boundSave) {
+    btnSave.addEventListener('click', () => {
+      const data = JSON.stringify(actions.exportProject(), null, 2);
+      const blob = new Blob([data], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'project.json';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 0);
+    });
+    btnSave.dataset.boundSave = '1';
+  }
+
+  // Undo / Redo / Reset
+  document.getElementById('btn-undo')?.addEventListener('click', () => actions.undo());
+  document.getElementById('btn-redo')?.addEventListener('click', () => actions.redo());
+  document.getElementById('btn-reset')?.addEventListener('click', () => { actions.reset(); actions.clearHistory(); });
 
   __toolbarBound = true;
 }

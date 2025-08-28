@@ -23,20 +23,58 @@ function mutate(updater, emitNow = true){
   return state;
 }
 
+// History (undo/redo) support
+const history = { past: [], future: [], pending: null };
+function snapshot(){
+  return JSON.parse(JSON.stringify({
+    chains: state.chains,
+    nodes: state.nodes,
+    selection: state.selection,
+    viewport: state.viewport,
+    ui: state.ui
+  }));
+}
+function applySnapshot(s){
+  state.chains = JSON.parse(JSON.stringify(s.chains || []));
+  state.nodes = JSON.parse(JSON.stringify(s.nodes || []));
+  state.selection = JSON.parse(JSON.stringify(s.selection || { ids: [] }));
+  state.viewport = JSON.parse(JSON.stringify(s.viewport || { x:0, y:0, k:1 }));
+  state.ui = JSON.parse(JSON.stringify(s.ui || state.ui));
+}
+function recordBeforeChange(){
+  if (batching > 0){
+    if (!history.pending) history.pending = snapshot();
+  } else {
+    history.past.push(snapshot());
+    history.future = [];
+  }
+}
+
 export const actions = {
   beginBatch(){ batching++; },
-  endBatch(){ if (batching > 0) batching--; maybeEmit(); },
+  endBatch(){
+    if (batching > 0) batching--;
+    if (batching === 0 && history.pending){
+      history.past.push(history.pending);
+      history.pending = null;
+      history.future = [];
+    }
+    maybeEmit();
+  },
 
   reset(){
+    recordBeforeChange();
     const keepUi = JSON.parse(JSON.stringify(state.ui || {}));
     state.chains = [];
     state.nodes = [];
     state.selection = { ids: [] };
     state.viewport = { x:0, y:0, k:1 };
     state.ui = keepUi;
+    maybeEmit();
   },
 
   addChain(){
+    recordBeforeChange();
     const id = crypto.randomUUID();
     state.chains.push({ id, label: `Group ${state.chains.length+1}`, ledCount:0, lmPerLed:0 });
     maybeEmit();
@@ -44,12 +82,14 @@ export const actions = {
   },
 
   updateChain(chainId, patch){
+    recordBeforeChange();
     const c = state.chains.find(x=>x.id===chainId);
     if (c) Object.assign(c, patch);
     maybeEmit();
   },
 
   addNode(node){
+    recordBeforeChange();
     const id = node.id || crypto.randomUUID();
     // default order for components within a chain (LightSource not ordered)
     let order = node.order;
@@ -63,24 +103,28 @@ export const actions = {
   },
 
   updateNode(id, patch){
+    recordBeforeChange();
     const n = state.nodes.find(x=>x.id===id);
     if (n) Object.assign(n, patch);
     maybeEmit();
   },
 
   setNodeDisabled(id, disabled){
+    recordBeforeChange();
     const n = state.nodes.find(x=>x.id===id);
     if (n) n.disabled = !!disabled;
     maybeEmit();
   },
 
   removeNode(id){
+    recordBeforeChange();
     state.nodes = state.nodes.filter(n => n.id !== id);
     if (state.selection.ids.includes(id)) state.selection.ids = [];
     maybeEmit();
   },
 
   moveNodeToChain(nodeId, newChainId){
+    recordBeforeChange();
     const n = state.nodes.find(x=>x.id===nodeId);
     if (!n) return;
     n.chainId = newChainId;
@@ -108,6 +152,7 @@ export const actions = {
 
   // Reorder a component within a chain to a specific index
   reorderNodeInChain(nodeId, chainId, newIndex){
+    recordBeforeChange();
     const comps = state.nodes
       .filter(n => n.chainId === chainId && n.kind !== 'LightSource')
       .sort((a,b) => (a.order??0) - (b.order??0));
@@ -121,11 +166,13 @@ export const actions = {
   },
 
   selectSingle(id){
+    recordBeforeChange();
     state.selection = { ids: id ? [id] : [] };
     maybeEmit();
   },
 
   setUi(patch){
+    recordBeforeChange();
     Object.assign(state.ui, patch);
     maybeEmit();
   },
@@ -133,6 +180,39 @@ export const actions = {
   setViewport(vp){
     Object.assign(state.viewport, vp);
     maybeEmit();
+  },
+
+  // History controls
+  undo(){
+    const prev = history.past.pop();
+    if (!prev) return;
+    const cur = snapshot();
+    history.future.push(cur);
+    applySnapshot(prev);
+    emit();
+  },
+  redo(){
+    const next = history.future.pop();
+    if (!next) return;
+    history.past.push(snapshot());
+    applySnapshot(next);
+    emit();
+  },
+  clearHistory(){ history.past = []; history.future = []; history.pending = null; },
+
+  // Project import/export
+  exportProject(){ return snapshot(); },
+  loadProject(obj){
+    const s = obj || {};
+    history.past = []; history.future = []; history.pending = null;
+    applySnapshot({
+      chains: s.chains || [],
+      nodes: s.nodes || [],
+      selection: s.selection || { ids: [] },
+      viewport: s.viewport || { x:0, y:0, k:1 },
+      ui: s.ui || state.ui
+    });
+    emit();
   }
 };
 

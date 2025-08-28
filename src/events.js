@@ -6,7 +6,7 @@ import { renderAll } from './ui.js';
 import { bindNodeInteractions } from './features/nodes/interactions.js';
 import { bindLasso } from './features/nodes/lasso.js';
 
-import { bindViewport, fitView } from './features/board/viewport.js';
+import { bindViewport } from './features/board/viewport.js';
 
 import { bindLightSourceModal } from './features/modals/lightSourceModal.js';
 import { bindNodeModal } from './features/modals/nodeEditModal.js';
@@ -79,5 +79,5 @@ export function mount(){
 
   // 🟩 NEW/CHANGED: expose a convenient fit-to-view helper
   window.App = window.App || {};
-  window.App.View = { fit: fitView };
+  // Fit button removed
 }
