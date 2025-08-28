@@ -64,10 +64,11 @@ function onAddLight() {
       actions.updateNode(nodeId, { x, y });
     }
 
-    // 3) ⬇️ ensure the new node is in the DOM, then reflow the grid to assign a cell
+    // 3) ensure the node is rendered, then reflow and repaint once more
     renderNodes();
     window.__gridEnhance?.refresh?.();
-
+    requestAnimationFrame(() => { renderNodes(); });
+    
   } catch (e) { /* no-op */ }
 }
 

@@ -172,6 +172,8 @@ export function bindAddComponentModal() {
     try {
       renderNodes();
       window.__gridEnhance?.refresh?.();
+    // Ensure DOM reflects grid-based state updates
+      requestAnimationFrame(() => { renderNodes(); });
     } catch (e) { /* ignore */ }
 
     close();
