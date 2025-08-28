@@ -36,3 +36,4 @@
 }
 #stash-section{ display:flex; flex-direction:column; min-height:0; }
 #stash-list{ flex:1 1 auto; min-height:180px; overflow:auto; padding:8px; border:1px solid var(--border); border-radius:0; background:var(--stash-bg); }
+#stash-list.drop-over{ background: rgba(0,122,204,0.08); border-color: var(--blue); }
