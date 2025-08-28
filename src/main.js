@@ -109,6 +109,17 @@ function mount(){
       }
     } finally { actions.endBatch && actions.endBatch(); }
   });
+
+  // Clicking empty space on the board clears selection
+  const boardRoot = document.getElementById('board');
+  if (boardRoot && !boardRoot.dataset.boundClear){
+    boardRoot.addEventListener('click', (e)=>{
+      const t = e.target;
+      if (t.closest('.tree-item') || t.closest('.tree-chain-hdr') || t.closest('.node')) return;
+      actions.selectSingle(null);
+    });
+    boardRoot.dataset.boundClear = '1';
+  }
   // No default content; board may start empty
   renderAll();
   relayout();

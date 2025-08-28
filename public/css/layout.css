@@ -1,20 +1,13 @@
 /* --- Top bar --- */
 #topbar {
-  position: static;                /* participates in normal flow */
-  top: 0;
-  left: 0;
-  right: 0;
-  height: auto;                    /* adapts when buttons wrap */
-  min-height: 44px;
-  background: #0a0f16;
+  position: static;
+  top: 0; left: 0; right: 0;
+  height: auto; min-height: 44px;
+  background: var(--panel);
   border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex: 0 0 auto;
-  flex-wrap: wrap;
-  padding: 6px 10px;
-  z-index: 20;
+  display: flex; align-items: center; justify-content: space-between;
+  flex: 0 0 auto; flex-wrap: wrap;
+  padding: 6px 10px; z-index: 20;
 }
 
 /* --- App layout (flow below topbar) --- */
@@ -75,13 +68,21 @@ body {
   z-index: 5;
 }
 
-#sidebar {
-  width: 360px;
-  border-left: 1px solid var(--border);
-  background: linear-gradient(180deg, var(--panel), var(--panel-2));
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
+#sidebar { width: 360px; border-left: 1px solid var(--border); background: var(--panel); overflow: hidden; display: flex; flex-direction: column; gap: 0; padding: 0; }
+
+/* Sidebar cards (flat neumorphism) */
+.sidebar-card{ border-top:1px solid var(--border); border-bottom:1px solid var(--border); background: var(--panel); padding:0; box-shadow: none; }
+.sidebar-card-title{ padding:10px 12px; font-weight:700; letter-spacing:.2px; color: var(--text); background: var(--panel-2); border-bottom:1px solid var(--border); box-shadow: none; }
+.sidebar-card-body{ padding:10px 12px; }
+
+/* Make Stash stretch to bottom */
+#stash-section{ flex:1 1 auto; display:flex; flex-direction:column; }
+#stash-section .sidebar-card-body{ flex:1 1 auto; display:flex; padding:0; }
+#stash-list{ flex:1 1 auto; background: var(--panel-2); }
+
+/* Square buttons in topbar */
+#topbar .btn{ border-radius:0 }
 
 #groups-layer { pointer-events: none; }
+#topbar .left #btn-add-light-source{ background: rgba(0,231,255,0.12); border-color: var(--neon-cyan); color: var(--text); }
+#topbar .left #btn-add-component{ background: rgba(0,231,255,0.12); border-color: var(--neon-cyan); color: var(--text); }

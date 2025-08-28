@@ -17,7 +17,7 @@ function metricLineFor(n){
   });
   const spacer = document.createElement('span'); spacer.className = 'spacer';
   const eff = nodeEffRange(n); const effEl = document.createElement('span'); effEl.className = 'eff';
-  effEl.textContent = `Eff: ${eff.min.toFixed(3)} – ${eff.max.toFixed(3)}`;
+  effEl.textContent = `Eff: ${eff.min.toFixed(1)} - ${eff.max.toFixed(1)}`;
   wrap.appendChild(spacer); wrap.appendChild(effEl);
   return wrap;
 }
@@ -28,8 +28,8 @@ function renderStashChain(container, chainId, nodes){
   // Header uses the Light Source title if present (even if disabled)
   const ls = nodes.find(n => n.chainId===chainId && n.kind==='LightSource');
   if (ls) {
-    const hdr = document.createElement('div'); hdr.className = 'tree-chain-hdr';
-    const title = document.createElement('div'); title.className = 'tree-chain-title';
+    const hdr = document.createElement('div'); hdr.className = 'tree-chain-hdr'; hdr.tabIndex = 0;
+    const title = document.createElement('div'); title.className = 'tree-chain-title accent-title ls';
     title.textContent = ls.label || 'Light Source';
     hdr.appendChild(title);
     // LS selection + dragging + editing from stash
@@ -45,27 +45,28 @@ function renderStashChain(container, chainId, nodes){
     group.appendChild(hdr);
   }
 
-  const ul = document.createElement('ul');
-  ul.className = 'tree-list';
   const comps = nodes.filter(n => n.chainId===chainId && n.kind!=='LightSource');
-  // If this stash group has no Light Source header, hide branch graphics
-  if (!ls) ul.classList.add('no-branches');
-  comps.forEach(n => {
-    const li = document.createElement('li'); li.className = 'tree-item'; li.dataset.nodeId = n.id;
-    const t = document.createElement('div'); t.className = 'tree-item-title'; t.textContent = (n.config?.name || n.label || n.kind);
-    li.appendChild(t);
-    li.addEventListener('click', ()=> actions.selectSingle(n.id));
-    li.addEventListener('dblclick', ()=> window.App?.Events?.openNodeModal?.(n.id));
-    li.draggable = true;
-    li.addEventListener('dragstart', (e)=>{
-      e.dataTransfer?.setData('text/node-id', n.id);
-      e.dataTransfer?.setData('text/plain', n.id);
-      e.dataTransfer.effectAllowed = 'move';
+  if (comps.length > 0){
+    const ul = document.createElement('ul');
+    ul.className = 'tree-list';
+    if (!ls) ul.classList.add('no-branches'); // hide branches when only components
+    comps.forEach(n => {
+      const li = document.createElement('li'); li.className = 'tree-item'; li.dataset.nodeId = n.id; li.tabIndex = 0;
+      const t = document.createElement('div'); t.className = 'tree-item-title accent-title comp'; t.textContent = (n.config?.name || n.label || n.kind);
+      li.appendChild(t);
+      li.addEventListener('click', ()=> actions.selectSingle(n.id));
+      li.addEventListener('dblclick', ()=> window.App?.Events?.openNodeModal?.(n.id));
+      li.draggable = true;
+      li.addEventListener('dragstart', (e)=>{
+        e.dataTransfer?.setData('text/node-id', n.id);
+        e.dataTransfer?.setData('text/plain', n.id);
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      ul.appendChild(li);
     });
-    ul.appendChild(li);
-  });
-
-  group.appendChild(ul); container.appendChild(group);
+    group.appendChild(ul);
+  }
+  container.appendChild(group);
 }
 
 export function renderStash(){
@@ -91,8 +92,8 @@ export function renderStash(){
   // DnD target: dropping here stashes the node (and whole chain if LS)
   const section = document.getElementById('stash-section') || el;
   if (!section.dataset.boundDrop){
-    const onOver = (e)=>{ e.preventDefault(); el.classList.add('drop-over'); };
-    const onLeave = ()=>{ el.classList.remove('drop-over'); };
+    const onOver = (e)=>{ e.preventDefault(); };
+    const onLeave = ()=>{};
     section.addEventListener('dragover', onOver);
     section.addEventListener('dragleave', onLeave);
     section.addEventListener('drop', (e)=>{

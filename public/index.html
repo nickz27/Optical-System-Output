@@ -18,15 +18,15 @@
 <body>
   <div id="topbar">
     <div class="left">
-      <button id="btn-add-light-source" class="btn btn-amber">Add Light Source</button>
-      <button id="btn-add-component" class="btn" style="background:#1f8f3a;color:white;border-color:#176c2c">Add Component</button>
-      <button id="btn-export-catalog" class="btn">Save</button>
-      <button id="btn-import-catalog" class="btn">Open</button>
+      <button id="btn-add-light-source" class="btn btn-amber"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg> Add Light Source</button>
+      <button id="btn-add-component" class="btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h10M4 17h7"/></svg> Add Component</button>
+      <button id="btn-export-catalog" class="btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v10"/><path d="M8 9l4 4 4-4"/><path d="M5 19h14"/></svg> Save</button>
+      <button id="btn-import-catalog" class="btn"><svg width="16" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h6l2 2h10v10H3z"/><path d="M3 7V5h6l2 2"/></svg> Open</button>
 </div>
     <div class="right">
-      <button id="btn-undo" class="btn">Undo</button>
-      <button id="btn-redo" class="btn">Redo</button>
-      <button id="btn-reset" class="btn btn-danger">Reset</button>
+      <button id="btn-undo" class="btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 14l-4-4 4-4"/><path d="M20 20a8 8 0 0 0-8-8H5"/></svg> Undo</button>
+      <button id="btn-redo" class="btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 14l4-4-4-4"/><path d="M4 20a8 8 0 0 1 8-8h7"/></svg> Redo</button>
+      <button id="btn-reset" class="btn btn-danger"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6v12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V6"/></svg> Reset</button>
     </div>
   </div>
 
@@ -37,29 +37,37 @@
         <div id="nodes-layer"></div>
       </div>
       <div id="guides"></div>
-      <div id="chain-footer" class="chain-footer" role="status" aria-live="polite"></div>
     </div>
 
     <aside id="sidebar">
-      <div id="system-card" class="section" aria-live="polite"></div>
-      <div class="section">
-        <div class="group">
-          <label>Function</label>
-          <select id="sel-function"></select>
-        </div>
-        <div class="group">
-          <label>Target minimum lumens</label>
-          <input id="inp-target-lm" type="number" min="0" step="1" value="100">
-        </div>
-        <div class="group">
-          <label>Final Output (active chain)</label>
-          <div id="final-range" class="range-chip">0–0 lm</div>
+      <div class="sidebar-card">
+        <div class="sidebar-card-title">System Efficiency</div>
+        <div class="sidebar-card-body">
+          <div id="system-card" aria-live="polite"></div>
         </div>
       </div>
-
-      <div id="stash-section" class="section">
-        <h3 style="margin:0 0 8px 0; font-weight:600; opacity:.9">Stash</h3>
-        <div id="stash-list"></div>
+      <div class="sidebar-card">
+        <div class="sidebar-card-title">Function Settings</div>
+        <div class="sidebar-card-body">
+          <div class="group">
+            <label>Function</label>
+            <select id="sel-function"></select>
+          </div>
+          <div class="group">
+            <label>Target minimum lumens</label>
+            <input id="inp-target-lm" type="number" min="0" step="1" value="100">
+          </div>
+          <div class="group">
+            <label>Final Output (active chain)</label>
+            <div id="final-range" class="range-chip">0–0 lm</div>
+          </div>
+        </div>
+      </div>
+      <div class="sidebar-card" id="stash-section">
+        <div class="sidebar-card-title">Stash</div>
+        <div class="sidebar-card-body">
+          <div id="stash-list"></div>
+        </div>
       </div>
     </aside>
   </div>

@@ -26,9 +26,10 @@ function renderChainHeader(c, nodes){
 
   const hdr = document.createElement('div');
   hdr.className = 'tree-chain-hdr';
+  hdr.tabIndex = 0;
 
   const title = document.createElement('div');
-  title.className = 'tree-chain-title';
+  title.className = 'tree-chain-title accent-title ls';
   title.textContent = titleText;
 
   const metrics = document.createElement('div');
@@ -42,7 +43,7 @@ function renderChainHeader(c, nodes){
     <span class="kv"><span class="k">lm/LED:</span><span class="v">${lm}</span></span>
     <span class="kv"><span class="k">Total lm:</span><span class="v">${tot}</span></span>
     <span class="spacer"></span>
-    <span class="eff">Eff: ${eff.min.toFixed(3)} – ${eff.max.toFixed(3)}</span>`;
+    <span class="eff">Eff: ${eff.min.toFixed(1)} - ${eff.max.toFixed(1)}</span>`;
 
   hdr.appendChild(title);
   hdr.appendChild(metrics);
@@ -93,7 +94,7 @@ function metricLineForComponent(n){
     const eff = nodeEffRange(n);
     const spacer = document.createElement('span'); spacer.className = 'spacer';
     const effEl = document.createElement('span'); effEl.className = 'eff';
-    effEl.textContent = `Eff: ${eff.min.toFixed(3)} – ${eff.max.toFixed(3)}`;
+    effEl.textContent = `Eff: ${eff.min.toFixed(1)} - ${eff.max.toFixed(1)}`;
     wrap.appendChild(spacer); wrap.appendChild(effEl);
   } catch (_) {}
   return wrap;
@@ -102,10 +103,11 @@ function metricLineForComponent(n){
 function renderNodeItem(n){
   const li = document.createElement('li');
   li.className = 'tree-item';
+  li.tabIndex = 0;
   li.dataset.nodeId = n.id;
 
   const title = document.createElement('div');
-  title.className = 'tree-item-title';
+  title.className = 'tree-item-title accent-title comp';
   title.textContent = (n.config?.name || n.label || n.kind);
 
   const metrics = metricLineForComponent(n);
@@ -169,6 +171,7 @@ export function renderTreeBoard(state){
       .slice()
       .sort(byOrderOrLabel);
     comps.forEach(n => ul.appendChild(renderNodeItem(n)));
+    if (comps.length === 0) { ul.style.display = 'none'; }
 
     // Allow dropping onto the list area as well
     function indexFromY(ulEl, clientY){
