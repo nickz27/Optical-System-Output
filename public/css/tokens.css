@@ -18,6 +18,7 @@
   --neon-amber:#ffd166;
   /* Stash surface */
   --stash-bg:#1b1b1b; /* slightly darker than panel-2 */
+  --branch:#5a5a5a;   /* tree branch color (lighter gray) */
 }
 body{background:var(--bg);color:var(--text);font-family:Segoe UI, Roboto, Helvetica, Arial, sans-serif;font-size:13px;}
 .btn{background:#2d2d2d;color:var(--text);border:1px solid var(--border);border-radius:0;padding:6px 10px;margin-right:8px;display:inline-flex;align-items:center;gap:6px}
