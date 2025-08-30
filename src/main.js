@@ -4,7 +4,6 @@ import { bindConfirmLsDelete, openConfirmLsDelete } from './features/modals/conf
 import { getState, actions, subscribe } from './state/store.js';
 import { renderNodes } from './features/nodes/render.js';
 import { renderBoard } from './features/board/board.js';
-import './features/groups/gridEnhance.js';
 import { bindNodeInteractions } from './features/nodes/interactions.js';
 import { bindToolbar } from './features/toolbar/toolbar.js';
 import { bindAddComponentModal, openAddComponentModal } from './features/modals/addComponentModal.js';
