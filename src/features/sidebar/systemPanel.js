@@ -6,8 +6,10 @@ export function renderSystemPanel(){
   if (!el) return;
   const st = getState();
   const s = systemSummary(st.nodes, st.chains);
-  const effMin = Number.isFinite(s.systemEfficiency.min) ? (s.systemEfficiency.min * 100).toFixed(1) : '-';
-  const effMax = Number.isFinite(s.systemEfficiency.max) ? (s.systemEfficiency.max * 100).toFixed(1) : '-';
+  // Derive efficiency from totals to avoid any stale/rounding issues
+  const totalSrc = (st.chains||[]).reduce((sum,c)=> sum + ((c.ledCount||0)*(c.lmPerLed||0)), 0);
+  const effMin = totalSrc>0 && Number.isFinite(s.totalLumens?.min) ? ((s.totalLumens.min / totalSrc) * 100).toFixed(1) : '-';
+  const effMax = totalSrc>0 && Number.isFinite(s.totalLumens?.max) ? ((s.totalLumens.max / totalSrc) * 100).toFixed(1) : '-';
   const lmMin  = Number.isFinite(s.totalLumens.min)      ? s.totalLumens.min.toFixed(1)      : '-';
   const lmMax  = Number.isFinite(s.totalLumens.max)      ? s.totalLumens.max.toFixed(1)      : '-';
   el.innerHTML = `
