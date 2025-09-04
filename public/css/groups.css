@@ -21,7 +21,7 @@
 .group-box .header .stats{ margin-left:auto; font-variant-numeric:tabular-nums; opacity:.8; color:var(--muted) }
 .group-sep{ position:absolute; top:36px; bottom:8px; width:0; border-left:1px dashed rgba(255,255,255,0.25); }
 
-#system-card{ margin-top:0; padding:12px; border:1px solid var(--border); border-radius:0; background:var(--panel); }
+#system-card{ margin-top:0; padding:0; border:0; background:transparent; }
 #system-card h4{ margin:0 0 6px 0; font-weight:600; opacity:.9; }
 #system-card .row{ display:flex; justify-content:space-between; margin:.25rem 0; }
 
@@ -37,3 +37,8 @@
 #stash-section{ display:flex; flex-direction:column; min-height:0; }
 #stash-list{ flex:1 1 auto; min-height:180px; overflow:auto; padding:8px; border:1px solid var(--border); border-radius:0; background:var(--stash-bg); }
 #stash-list.drop-over{ background: rgba(0,122,204,0.08); border-color: var(--blue); }
+
+/* System card typography */
+#system-card .sys-label{ color: var(--muted); font-size: .95rem; margin-bottom: 2px; }
+#system-card .sys-value{ font-size: 1.25rem; line-height: 1.35; font-variant-numeric: tabular-nums; }
+#system-card .sys-value .sep{ opacity: .7; margin: 0 .25rem; }

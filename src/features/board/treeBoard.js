@@ -43,7 +43,7 @@ function renderChainHeader(c, nodes){
     <span class="kv"><span class="k">lm/LED:</span><span class="v">${lm}</span></span>
     <span class="kv"><span class="k">Total lm:</span><span class="v">${tot}</span></span>
     <span class="spacer"></span>
-    <span class="eff">Eff: ${eff.min.toFixed(1)} - ${eff.max.toFixed(1)}</span>`;
+    <span class="eff">Eff: ${(eff.min*100).toFixed(1)}% - ${(eff.max*100).toFixed(1)}%</span>`;
 
   hdr.appendChild(title);
   hdr.appendChild(metrics);
