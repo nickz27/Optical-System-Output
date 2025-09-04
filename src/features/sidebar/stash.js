@@ -17,7 +17,7 @@ function metricLineFor(n){
   });
   const spacer = document.createElement('span'); spacer.className = 'spacer';
   const eff = nodeEffRange(n); const effEl = document.createElement('span'); effEl.className = 'eff';
-  effEl.textContent = `Eff: ${eff.min.toFixed(1)} - ${eff.max.toFixed(1)}`;
+  effEl.textContent = `Eff: ${(eff.min*100).toFixed(1)}% - ${(eff.max*100).toFixed(1)}%`;
   wrap.appendChild(spacer); wrap.appendChild(effEl);
   return wrap;
 }
